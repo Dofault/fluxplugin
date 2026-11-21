@@ -13,6 +13,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
@@ -54,8 +55,12 @@ final class Outfits implements Listener {
     record Rarity(String id, String colour, int rank) {
     }
 
-    /** {@code item}: what is worn, a Flux item id ({@code namespace:id}) or a material. */
-    record Cosmetic(String key, String name, String item, EquipmentSlot slot, boolean free, Rarity rarity, boolean adminOnly) {
+    /**
+     * {@code item}: what is worn, a Flux item id ({@code namespace:id}) or a material. {@code model}: an item model
+     * of the pack drawn in place of that item's own (a hat that is no armour piece), or null.
+     */
+    record Cosmetic(String key, String name, String item, String model, EquipmentSlot slot, boolean free, Rarity rarity,
+                    boolean adminOnly) {
     }
 
     /**
@@ -150,7 +155,10 @@ final class Outfits implements Listener {
                 case "feet" -> EquipmentSlot.FEET;
                 default -> EquipmentSlot.HEAD;
             };
-            String item = c.getString("item");
+            String model = c.getString("model");
+            NamespacedKey modelKey = model == null ? null : NamespacedKey.fromString(model.toLowerCase(Locale.ROOT));
+            if (model != null && modelKey == null) plugin.getLogger().warning("Cosmetic " + key + ": model " + model + " is not a key");
+            String item = c.getString("item", modelKey == null ? null : "PAPER");
             if (item == null || item.isBlank()) {
                 plugin.getLogger().warning("Cosmetic " + key + ": no item, left out");
                 continue;
@@ -160,7 +168,7 @@ final class Outfits implements Listener {
                 plugin.getLogger().warning("Cosmetic " + key + ": unknown rarity " + c.getString("rarity") + ", " + lowest.id() + " used");
                 rarity = lowest;
             }
-            cosmetics.put(key, new Cosmetic(key, c.getString("name", key), item, slot, c.getBoolean("free", false), rarity, false));
+            cosmetics.put(key, new Cosmetic(key, c.getString("name", key), item, modelKey == null ? null : modelKey.toString(), slot, c.getBoolean("free", false), rarity, false));
         }
         rpg.load(config);
         // each piece of an rpg outfit, worn on its own outside the rpg universe by admins only
@@ -168,7 +176,7 @@ final class Outfits implements Listener {
             for (EquipmentSlot slot : ARMOUR) {
                 String item = o.pieces().get(slot);
                 String key = pieceKey(o, slot);
-                if (item != null && !cosmetics.containsKey(key)) cosmetics.put(key, new Cosmetic(key, o.name(), item, slot, false, o.rarity(), true));
+                if (item != null && !cosmetics.containsKey(key)) cosmetics.put(key, new Cosmetic(key, o.name(), item, null, slot, false, o.rarity(), true));
             }
         }
         // the looks of the players online follow the new definitions
@@ -346,6 +354,10 @@ final class Outfits implements Listener {
         boolean fluxId = spec.indexOf(':') > 0 && !spec.startsWith("itemsadder:") && !spec.startsWith("source:");
         ItemStack item = fluxId ? CustomItems.item(spec) : null;
         if (item == null) item = Items.of(spec, player);
+        if (item != null && c.model() != null) {
+            NamespacedKey model = NamespacedKey.fromString(c.model());
+            item.editMeta(meta -> meta.setItemModel(model));
+        }
         // the looks of the suite (FluxArmor's 3D worn asset, no glint over it): Flux gives them to items in
         // inventories only, and a cosmetic's item never is in one
         if (item != null) fr.influencraft.flux.api.items.ItemLooks.apply(item);

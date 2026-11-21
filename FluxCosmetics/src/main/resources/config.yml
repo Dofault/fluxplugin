@@ -69,7 +69,8 @@ rarities:
   legendaire: {colour: "#F0A800"}
   fabuleux: {colour: "#FF5C5C"}
 
-# The cosmetics. item: what is worn (a Flux item id such as fluxarmor:zero_helmet, or a material), slot: head, chest,
+# The cosmetics. item: what is worn (a Flux item id such as fluxarmor:zero_helmet, or a material); model: an item
+# model of the pack drawn instead (item is then optional), slot: head, chest,
 # legs or feet (drawn over the real item of that slot, for everybody, the wearer included: his real item keeps its
 # name and lore on his screen), rarity: one of the rarities above, free: owned by everybody. Otherwise a player owns
 # it once given (/tenue donner <player> <id|tout>); admins (flux.admin) own them all.
@@ -145,6 +146,32 @@ cosmetics:
     slot: head
     rarity: commun
     free: true
+  # coiffes (modèles de FluxCosmetics/assets/gen_coiffes.py ; model : modèle d'objet du pack dessiné sur la tête)
+  coiffe_endurant:
+    name: "&#C4544BBandeau de l'Endurant"
+    model: fluxcosmetics:coiffe_endurant
+    slot: head
+    rarity: commun
+  coiffe_cueilleur:
+    name: "&#C9B58ABob du Cueilleur"
+    model: fluxcosmetics:coiffe_cueilleur
+    slot: head
+    rarity: commun
+  coiffe_coursier:
+    name: "&#44807FCasquette du Coursier"
+    model: fluxcosmetics:coiffe_coursier
+    slot: head
+    rarity: unique
+  coiffe_convoyeur:
+    name: "&#B98A5EChapeau du Convoyeur"
+    model: fluxcosmetics:coiffe_convoyeur
+    slot: head
+    rarity: unique
+  coiffe_couchant:
+    name: "&#D9A93FLunettes du Couchant"
+    model: fluxcosmetics:coiffe_couchant
+    slot: head
+    rarity: epique
   wings:
     name: "Ailes"
     item: ELYTRA
@@ -154,11 +181,15 @@ cosmetics:
 # Outfits of the rpg universe, apart from the vanilla cosmetics: each one is a whole outfit (the four slots).
 # set: a FluxArmor set (pieces fluxarmor:<set>_<helmet|chestplate|leggings|boots>), or pieces.<piece> to pick the
 # items one by one. Owned when free, given (/tenue donner), by admins, or when it is the player's class's.
+# class: the class to embody to wear it (FluxDungeons id), level: the level reached in that class. An outfit with
+# class or level is worn only while the player meets both, even given or free (admins aside).
+# Each class's default outfit is common, its max level (50) outfit mythic.
 rpg-outfits:
   rpg_brasier:
     name: "&#C96B36Tenue du Brasier"
     set: brasier
     rarity: commun
+    class: pyromancer
   rpg_givre:
     name: "&#8EBCCBTenue du Givre"
     set: givre
@@ -166,11 +197,14 @@ rpg-outfits:
   rpg_ancien:
     name: "&#A2B88ATenue du Sylve-Ancien"
     set: ancien
-    rarity: commun
+    rarity: mythique
+    class: druid
+    level: 50
   rpg_saule:
     name: "&#82916BTenue du Vieux-Saule"
     set: saule
-    rarity: unique
+    rarity: commun
+    class: druid
   rpg_sylve:
     name: "&#A2B88ATenue de la Sylve Primordiale"
     set: sylve
@@ -179,10 +213,14 @@ rpg-outfits:
     name: "&#8EBCCBTenue des Mille Hivers"
     set: hivers
     rarity: mythique
+    class: cryomancer
+    level: 50
   rpg_pyromancien:
     name: "&#C65A35Tenue du Pyromancien des Cendres"
     set: pyromancien
     rarity: mythique
+    class: pyromancer
+    level: 50
   rpg_sentinelle:
     name: "&#83A6F5Tenue de la Sentinelle Azurée"
     set: sentinelle
@@ -190,7 +228,8 @@ rpg-outfits:
   rpg_zero:
     name: "&#B9E8F2Tenue du Zéro Absolu"
     set: zero
-    rarity: legendaire
+    rarity: commun
+    class: cryomancer
   rpg_arcanum:
     name: "&#C8874DTenue de l'Arcanum"
     set: arcanum
@@ -200,8 +239,8 @@ rpg-outfits:
 # there is never bare.
 rpg-class-outfits:
   pyromancer: rpg_brasier
-  cryomancer: rpg_givre
-  druid: rpg_ancien
+  cryomancer: rpg_zero
+  druid: rpg_saule
   default: rpg_sentinelle
 
 # Universe of the rpg world (Flux's universes.yml).
