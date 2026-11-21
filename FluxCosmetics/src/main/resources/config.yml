@@ -172,6 +172,82 @@ cosmetics:
     model: fluxcosmetics:coiffe_couchant
     slot: head
     rarity: epique
+  # chapeaux et coiffes (gen_coiffes.py, coiffes_chapeaux.py)
+  coiffe_marine:
+    name: "&#5A6F8ECasquette du Matelot"
+    model: fluxcosmetics:coiffe_marine
+    slot: head
+    rarity: commun
+  coiffe_bordeaux:
+    name: "&#A54A52Casquette du Vaurien"
+    model: fluxcosmetics:coiffe_bordeaux
+    slot: head
+    rarity: commun
+  coiffe_noisette:
+    name: "&#E8DCC2Bonnet des Veillées"
+    model: fluxcosmetics:coiffe_noisette
+    slot: head
+    rarity: commun
+  coiffe_sauge:
+    name: "&#A8B99CBob du Flâneur"
+    model: fluxcosmetics:coiffe_sauge
+    slot: head
+    rarity: commun
+  coiffe_cognac:
+    name: "&#C28A4EChapeau du Bouvier"
+    model: fluxcosmetics:coiffe_cognac
+    slot: head
+    rarity: unique
+  coiffe_charbon:
+    name: "&#8A8E9AHaut-de-forme du Notable"
+    model: fluxcosmetics:coiffe_charbon
+    slot: head
+    rarity: unique
+  coiffe_prune:
+    name: "&#8A63A6Chapeau de l'Astrologue"
+    model: fluxcosmetics:coiffe_prune
+    slot: head
+    rarity: epique
+  coiffe_royale:
+    name: "&#E6CB7ACouronne des Anciens Rois"
+    model: fluxcosmetics:coiffe_royale
+    slot: head
+    rarity: mythique
+  coiffe_chantier:
+    name: "&#EFC44ECasque du Bâtisseur"
+    model: fluxcosmetics:coiffe_chantier
+    slot: head
+    rarity: commun
+  coiffe_chevalier:
+    name: "&#B9C3D0Heaume du Chevalier"
+    model: fluxcosmetics:coiffe_chevalier
+    slot: head
+    rarity: epique
+  coiffe_beret:
+    name: "&#AA4A4EBéret du Peintre"
+    model: fluxcosmetics:coiffe_beret
+    slot: head
+    rarity: commun
+  coiffe_petrole:
+    name: "&#8CC6C8Bandeau du Sprinteur"
+    model: fluxcosmetics:coiffe_petrole
+    slot: head
+    rarity: commun
+  coiffe_capuche:
+    name: "&#6E8B6ACapuche du Rôdeur"
+    model: fluxcosmetics:coiffe_capuche
+    slot: head
+    rarity: unique
+  coiffe_tricorne:
+    name: "&#CDBB94Tricorne du Flibustier"
+    model: fluxcosmetics:coiffe_tricorne
+    slot: head
+    rarity: epique
+  coiffe_moto:
+    name: "&#E9E4D8Casque du Pilote"
+    model: fluxcosmetics:coiffe_moto
+    slot: head
+    rarity: unique
   wings:
     name: "Ailes"
     item: ELYTRA
