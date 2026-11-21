@@ -99,7 +99,12 @@ final class BlockbenchModel {
                            Map<String, JsonObject> cubes, Set<String> groupNames, List<double[]> placements, List<Boolean> emissives) {
         JsonObject g = node.has("name") ? node : groupsByUuid.getOrDefault(node.get("uuid").getAsString(), node);
         String name = g.has("name") ? g.get("name").getAsString().toLowerCase(Locale.ROOT) : "";
-        if (groupNames.contains(name)) limb = name;
+        if (groupNames.contains(name)) {
+            limb = name;
+            // a limb group present but empty means "nothing on that limb": it is not replaced by the other side's mirror
+            // (a holster on the right thigh only)
+            groups.computeIfAbsent(limb, k -> new ArrayList<>());
+        }
         chain.add(g);
         for (JsonElement e : node.getAsJsonArray("children")) {
             if (e.isJsonObject()) {

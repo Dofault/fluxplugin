@@ -118,9 +118,10 @@ final class PackBuilder {
             List<List<BlockbenchModel.Face>> perBox = new ArrayList<>();
             int layers = 0, total = 0;
             for (Box b : pi.boxes()) {
-                // Missing group: the right limb's one, mirrored (x -> -x).
+                // Missing group: the right limb's one, mirrored (x -> -x). A group present but empty stays empty
+                // (something worn on one side only).
                 List<BlockbenchModel.Face> faces = group(m, b.groups());
-                boolean mirrored = faces.isEmpty() && b.mirrorOf() != null;
+                boolean mirrored = b.mirrorOf() != null && b.groups().stream().noneMatch(m.groups::containsKey);
                 if (mirrored) faces = group(m, groupsOf(b.mirrorOf()));
                 List<BlockbenchModel.Face> local = new ArrayList<>();
                 for (BlockbenchModel.Face f : faces) local.add(local(f, b, mirrored));

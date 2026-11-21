@@ -510,6 +510,195 @@ cosmetics:
     slot: head
     trail: cosmic_hat_particles
     rarity: fabuleux
+  # NEXUS, legacy of the wanderer (2026-11-21): 17 legs and 20 feet pieces, models of assets/gen_jambes.py drawn in 3D
+  # by FluxArmor (sets acc_<id>, one leggings or boots piece). trail: particles at the feet (trails, ring: true).
+  knee_pads:
+    name: "&#8FA5B5Genouillères"
+    item: fluxarmor:acc_knee_pads_leggings
+    slot: legs
+    rarity: commun
+  shin_guards:
+    name: "&#8FA5B5Protège-jambes"
+    item: fluxarmor:acc_shin_guards_leggings
+    slot: legs
+    rarity: commun
+  legs_futuristic:
+    name: "&#55C9D1Jambières futuristes"
+    item: fluxarmor:acc_legs_futuristic_leggings
+    slot: legs
+    rarity: epique
+  pants_torn:
+    name: "&#6686A3Pantalon déchiré"
+    item: fluxarmor:acc_pants_torn_leggings
+    slot: legs
+    rarity: commun
+  pants_camo:
+    name: "&#77AD69Pantalon camouflage"
+    item: fluxarmor:acc_pants_camo_leggings
+    slot: legs
+    rarity: unique
+  pants_striped:
+    name: "&#E5DDC5Pantalon rayé"
+    item: fluxarmor:acc_pants_striped_leggings
+    slot: legs
+    rarity: unique
+  pants_pyjama:
+    name: "&#B59BD6Pantalon de pyjama"
+    item: fluxarmor:acc_pants_pyjama_leggings
+    slot: legs
+    rarity: commun
+  shorts:
+    name: "&#A87348Short"
+    item: fluxarmor:acc_shorts_leggings
+    slot: legs
+    rarity: commun
+  skirt:
+    name: "&#6686A3Jupe"
+    item: fluxarmor:acc_skirt_leggings
+    slot: legs
+    rarity: unique
+  belt:
+    name: "&#E8B94DCeinture"
+    item: fluxarmor:acc_belt_leggings
+    slot: legs
+    rarity: commun
+  belt_pouches:
+    name: "&#A87348Ceinture avec pochettes"
+    item: fluxarmor:acc_belt_pouches_leggings
+    slot: legs
+    rarity: unique
+  holster:
+    name: "&#A87348Holster"
+    item: fluxarmor:acc_holster_leggings
+    slot: legs
+    rarity: unique
+  pants_chain:
+    name: "&#CBD8DFChaîne de pantalon"
+    item: fluxarmor:acc_pants_chain_leggings
+    slot: legs
+    rarity: commun
+  leg_frog:
+    name: "&#77AD69Grenouille accrochée à la jambe"
+    item: fluxarmor:acc_leg_frog_leggings
+    slot: legs
+    rarity: epique
+  belt_tnt:
+    name: "&#E15B35Mini TNT à la ceinture"
+    item: fluxarmor:acc_belt_tnt_leggings
+    slot: legs
+    rarity: epique
+  katana_sheath:
+    name: "&#55C9D1Fourreau de katana"
+    item: fluxarmor:acc_katana_sheath_leggings
+    slot: legs
+    rarity: epique
+  knee_pads_glow:
+    name: "&#A1F2E8Genouillères lumineuses"
+    item: fluxarmor:acc_knee_pads_glow_leggings
+    slot: legs
+    rarity: mythique
+  sneakers:
+    name: "&#6686A3Baskets classiques"
+    item: fluxarmor:acc_sneakers_boots
+    slot: feet
+    rarity: commun
+  sneakers_high:
+    name: "&#6686A3Baskets montantes"
+    item: fluxarmor:acc_sneakers_high_boots
+    slot: feet
+    rarity: commun
+  hiking_shoes:
+    name: "&#A87348Chaussures de randonnée"
+    item: fluxarmor:acc_hiking_shoes_boots
+    slot: feet
+    rarity: commun
+  cowboy_boots:
+    name: "&#D2AE78Bottes de cowboy"
+    item: fluxarmor:acc_cowboy_boots_boots
+    slot: feet
+    rarity: unique
+  military_boots:
+    name: "&#8FA5B5Bottes militaires"
+    item: fluxarmor:acc_military_boots_boots
+    slot: feet
+    rarity: unique
+  snow_boots:
+    name: "&#F4F0DFBottes de neige"
+    item: fluxarmor:acc_snow_boots_boots
+    slot: feet
+    rarity: unique
+  slippers:
+    name: "&#B59BD6Pantoufles"
+    item: fluxarmor:acc_slippers_boots
+    slot: feet
+    rarity: commun
+  slides:
+    name: "&#AAA99DClaquettes"
+    item: fluxarmor:acc_slides_boots
+    slot: feet
+    rarity: commun
+  flippers:
+    name: "&#77AD69Palmes"
+    item: fluxarmor:acc_flippers_boots
+    slot: feet
+    rarity: unique
+  ice_skates:
+    name: "&#CBD8DFPatins à glace"
+    item: fluxarmor:acc_ice_skates_boots
+    slot: feet
+    rarity: epique
+  roller_skates:
+    name: "&#55C9D1Rollers"
+    item: fluxarmor:acc_roller_skates_boots
+    slot: feet
+    rarity: epique
+  golden_shoes:
+    name: "&#FFE39AChaussures dorées"
+    item: fluxarmor:acc_golden_shoes_boots
+    slot: feet
+    rarity: legendaire
+  light_shoes:
+    name: "&#A1F2E8Chaussures lumineuses"
+    item: fluxarmor:acc_light_shoes_boots
+    slot: feet
+    rarity: mythique
+  magma_boots:
+    name: "&#F49A42Bottes de magma"
+    item: fluxarmor:acc_magma_boots_boots
+    slot: feet
+    rarity: legendaire
+  frog_feet:
+    name: "&#B4D88CPieds de grenouille"
+    item: fluxarmor:acc_frog_feet_boots
+    slot: feet
+    rarity: epique
+  duck_feet:
+    name: "&#E49A4EPieds de canard"
+    item: fluxarmor:acc_duck_feet_boots
+    slot: feet
+    rarity: epique
+  clogs:
+    name: "&#A87348Sabots"
+    item: fluxarmor:acc_clogs_boots
+    slot: feet
+    rarity: commun
+  futuristic_boots:
+    name: "&#55C9D1Bottes futuristes"
+    item: fluxarmor:acc_futuristic_boots_boots
+    slot: feet
+    rarity: legendaire
+  particle_boots:
+    name: "&#B59BD6Bottes enchantées"
+    item: fluxarmor:acc_particle_boots_boots
+    slot: feet
+    trail: particle_boots_particles
+    rarity: mythique
+  rocket_boots:
+    name: "&#F49A42Mini fusées aux pieds"
+    item: fluxarmor:acc_rocket_boots_boots
+    slot: feet
+    trail: rocket_boots_particles
+    rarity: fabuleux
   wings:
     name: "Ailes"
     item: ELYTRA
@@ -701,6 +890,22 @@ trails:
     low: 1.9
     high: 2.7
     radius: 0.7
+  particle_boots_particles:
+    colours: ["#B59BD6 #76579B", "#EF8ACB #B59BD6"]
+    period: 6
+    size: 0.4
+    ring: true
+    low: 0.05
+    high: 0.35
+    radius: 0.45
+  rocket_boots_particles:
+    colours: ["#F49A42 #A83C30", "#E15B35 #6F2929"]
+    period: 4
+    size: 0.35
+    ring: true
+    low: 0.0
+    high: 0.15
+    radius: 0.4
 
 # Outfits of the rpg universe, apart from the vanilla cosmetics: each one is a whole outfit (the four slots).
 # set: a FluxArmor set (pieces fluxarmor:<set>_<helmet|chestplate|leggings|boots>), or pieces.<piece> to pick the
