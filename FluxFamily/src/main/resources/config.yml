@@ -1,6 +1,6 @@
 # FluxFamily: couples, marriage, couple home and family trees.
 # A couple is free (both players agree). Marriage is the next step of a couple: the partner agrees, then the one who
-# proposed pays the price. The one who leaves a marriage keeps the "divorced" tag for good (FluxTags).
+# proposed pays the price. The one who leaves a marriage keeps the "divorced" tag for good (tags of FluxCosmetics).
 
 marriage:
   # Price of a marriage in the main currency, paid once by the one who proposes, when the partner accepts.

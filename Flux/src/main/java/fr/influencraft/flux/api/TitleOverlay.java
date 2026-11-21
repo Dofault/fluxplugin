@@ -10,7 +10,7 @@ package fr.influencraft.flux.api;
  *   frame.add("plinko_ball_y40", 86, 5);
  *   view.showTitle(frame.toString());
  * </pre>
- * Also the output of a title placeholder (FluxTags rows, the profile's rank line): start at cursor 0 right after the
+ * Also the output of a title placeholder (the profile's rank line, FluxCosmetics): start at cursor 0 right after the
  * background (whose advance brings the cursor back to the window's left edge), {@link #moveTo} 0 at the end, then
  * {@link #resolved()}.
  */
@@ -49,7 +49,7 @@ public final class TitleOverlay {
 
     /**
      * Places already formatted text {@code width} px wide (its advance minus 1) with its left edge at {@code x}, for
-     * sprites in a font of their own ({@code <font:fluxtags:r1>\uE000</font>}): one bitmap provider for a whole sheet
+     * sprites in a font of their own ({@code <font:fluxtags:p>\uE000</font>}): one bitmap provider for a whole sheet
      * instead of one ItemsAdder glyph per picture and height.
      */
     public TitleOverlay addText(String text, int x, int width, String colour) {

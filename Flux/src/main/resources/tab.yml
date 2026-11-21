@@ -5,7 +5,7 @@
 # Flux pieces: {player} {nick} {ping} {online} (players the viewer can see) {max} {version} {world} {group}
 #   {meta:<key>} (permission plugin meta) {date:<pattern>} {tps} {ram_used} {ram_max} {balance:<currency>}
 #   {balance_raw:<currency>} {balance_short:<currency>} {afk:<duration>} ("true" when idle that long)
-#   {animation:<name>}, the pieces below, and the pieces of the plugins (FluxTags: {tag}; FluxFamily: {married}).
+#   {animation:<name>}, the pieces below, and the pieces of the plugins (FluxCosmetics: {tag}; FluxFamily: {married}).
 enabled: true
 
 refresh:

@@ -525,7 +525,7 @@ def bg_pass(generic):
 def bg_profil(generic):
     """Player card of /profil: back (18) and menu icon (26), the shown player's name between them (text widget of
     the menu), above a raised identity card: photo well of 3 x 3 slots behind the bust (36-38, 46), the rank tag
-    over the sections (FluxTags, centre x 112, y 74), the 8 sections (40-43, 49-52) in a well, a signature under the
+    over the sections (FluxCosmetics' tags, centre x 112, y 74), the 8 sections (40-43, 49-52) in a well, a signature under the
     photo and a gold chip."""
     im = bg_window(generic, 2, 5, extra=22)
     d = ImageDraw.Draw(im, "RGBA")

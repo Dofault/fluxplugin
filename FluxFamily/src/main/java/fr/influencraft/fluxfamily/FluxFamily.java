@@ -49,7 +49,7 @@ import java.util.UUID;
  *   <li>Family tree: a player's parent is the player who adopted him, else his sponsor (FluxReferral, through
  *   {@link Family#lineage}). A married couple shares its children. Menu {@code famille}, focused on any player.</li>
  * </ul>
- * Shown in the tab list ({@code {married}}), the profile, FluxTags (status and divorced tags) and the leaderboard
+ * Shown in the tab list ({@code {married}}), the profile, the tags (status and divorced, through Flux's cosmetics.Tags) and the leaderboard
  * {@code famille} (size of the family). API for the other plugins: {@link Family}.
  */
 public final class FluxFamily extends FluxPlugin implements Listener {
@@ -77,7 +77,6 @@ public final class FluxFamily extends FluxPlugin implements Listener {
     private List<String> instantWorlds = List.of();
     private List<String> blockedWorlds = List.of();
     private boolean announce;
-    private boolean tags;
 
     @Override
     protected void enable() {
@@ -110,8 +109,7 @@ public final class FluxFamily extends FluxPlugin implements Listener {
                 return true;
             }
         });
-        tags = Bukkit.getPluginManager().isPluginEnabled("FluxTags");
-        if (tags) FamilyTags.register(this);
+        FamilyTags.register(this);
         TabList.piece(this, "married", p -> Family.married(p.getUniqueId()) ? getConfig().getString("tab.married", "") : "");
         placeholders("fluxfamily", this::placeholder);
         list("famille_info", q -> List.of(ListEntry.of("info").item(infoItem(q.viewer())).set("clic", "[sound] @click")));
@@ -157,7 +155,7 @@ public final class FluxFamily extends FluxPlugin implements Listener {
         warmups.values().forEach(BukkitTask::cancel);
         Family.bind(null);
         Family.unregisterAll(this);
-        if (tags) fr.influencraft.fluxtags.api.Tags.unregisterAll(this);
+        fr.influencraft.flux.api.cosmetics.Tags.unregisterAll(this);
     }
 
     @Override
@@ -436,7 +434,7 @@ public final class FluxFamily extends FluxPlugin implements Listener {
         store.delete(c);
         if (c.married() && byHim) {
             store.divorce(leaver, other, System.currentTimeMillis());
-            if (tags) FamilyTags.afterDivorce(leaver);
+            FamilyTags.afterDivorce(leaver);
         }
         String k = c.married() ? "divorced" : "separated";
         send(leaver, k, vars("%player%", name(other)));

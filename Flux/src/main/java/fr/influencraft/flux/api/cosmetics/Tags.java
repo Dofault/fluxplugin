@@ -1,4 +1,4 @@
-package fr.influencraft.fluxtags.api;
+package fr.influencraft.flux.api.cosmetics;
 
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -9,13 +9,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 /**
- * Tags given by other plugins of the suite (FluxFamily: relationship status, divorced). A provided tag shows in
- * {@code /tags} after the special tags; its image (a glyph of the {@code fluxtags} pack, see
- * {@code assets/gen_tags.py}) is chosen per player, null while locked.
+ * Player tags: the picture shown before a player's name in the chat, the tab list and over his head, chosen in the
+ * cosmetics menu. Kept by the cosmetics plugin of the suite (FluxCosmetics, the {@link Service}); other plugins add
+ * tags of their own here (FluxFamily: relationship status, divorced), listed after the server's ones. A tag's image
+ * is a glyph id of the {@code fluxtags} pack ({@code FluxCosmetics/assets/tags/gen_tags.py}), chosen per player,
+ * null while the tag is locked.
  *
  * <pre>
  *   Tags.register(this, "situation", "Situation", "Ta situation amoureuse.", p -> "celibataire");
+ *   Tags.unregisterAll(this);   // in disable()
  * </pre>
+ * Registering needs no provider: the tags show once the cosmetics plugin runs.
  */
 public final class Tags {
 
@@ -23,10 +27,12 @@ public final class Tags {
     public record Provided(Plugin owner, String id, String name, String description, Function<Player, String> image) {
     }
 
-    /** Implemented by FluxTags. */
+    /** What the cosmetics plugin provides. */
     public interface Service {
+        /** Id of the tag the player wears ({@code rang} by default, {@code aucun} for none). */
         String selected(UUID player);
 
+        /** Makes the player wear a tag, no unlock check, his name redrawn when he is online. */
         void select(UUID player, String tag);
     }
 
@@ -44,11 +50,13 @@ public final class Tags {
         PROVIDED.values().removeIf(t -> t.owner() == owner);
     }
 
+    /** Tags of the other plugins, by id. */
     public static Map<String, Provided> provided() {
         return Map.copyOf(PROVIDED);
     }
 
-    public static void bind(Service s) {
+    /** Set by the cosmetics plugin (null when it stops). */
+    public static void provide(Service s) {
         service = s;
     }
 
@@ -56,13 +64,15 @@ public final class Tags {
         return service != null;
     }
 
-    /** Id of the tag the player picked ({@code rang} by default, {@code aucun} for none). */
+    /** Id of the tag the player wears, null without the cosmetics plugin. */
     public static String selected(UUID player) {
-        return service == null ? null : service.selected(player);
+        Service s = service;
+        return s == null ? null : s.selected(player);
     }
 
-    /** Makes the player wear a tag (no unlock check: the caller just unlocked it). */
+    /** Makes the player wear a tag (no unlock check: the caller just unlocked it). Nothing without the provider. */
     public static void select(UUID player, String tag) {
-        if (service != null) service.select(player, tag);
+        Service s = service;
+        if (s != null) s.select(player, tag);
     }
 }

@@ -65,7 +65,7 @@ final class Outfits implements Listener {
 
     /**
      * An outfit saved by a player: its name (already cleaned), the cosmetic of each armour slot (missing: nothing
-     * there) and the tag (FluxTags id, null: not saved).
+     * there) and the tag (PlayerTags id, null: not saved).
      */
     record Preset(String name, Map<EquipmentSlot, String> pieces, String tag) {
     }

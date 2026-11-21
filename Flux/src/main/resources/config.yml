@@ -279,7 +279,7 @@ theme:
       background: bg_profil      # identity card (gen_ui.py), slots in it
       frames: none
       widgets:
-        rang: {type: raw, x: 0, text: "%fluxtags_profile%"}   # rank tag centred over the sections (FluxTags)
+        rang: {type: raw, x: 0, text: "%fluxcosmetics_tag_profile%"}   # rank tag centred over the sections (FluxCosmetics)
         pseudo: {type: text, ink: true, x: 88, y: 59, align: center, text: "%flux_profile_name%"}   # shown player, between back and icon
     cosmetiques: {title: "", plate: false, frame: "55-61, 64-70, 73-79"}   # FluxCosmetics: inventory rows only, no title plate (the mannequin is seen above)
     vote: {title: "Vote"}

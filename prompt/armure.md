@@ -1,4 +1,8 @@
+fais un prompt qui fera:
+une casquette, lunette de flexeur de soleil, bob, chapeau de cowboy, bandeau de sport.
 
+
+la suite du prompt est à prendre avec des pincettes : si je t'ai demandé au dessus de faire une casquette il faut que c e soit une casquette même si apres on te dit qu'il faut des bottes par exemple c un bon modele d'exemple pour toi realiser le prompt et comprendre le fond de ce que le prompt attend.
 
 Est-ce que tu peux faire un prompt qui va exécuter la création 3D de 1 à 4 pièces d'armure minecraft selon le contexte ou bien de quelquonque modele selon la nature de ce que j'ai dis au dessus?  te force pas à créer plein de modèle ça depend surtout du paragraphe du haut
 

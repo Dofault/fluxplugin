@@ -46,6 +46,7 @@ RENAMES = [
     ("sortingchest.", "fluxsorter."),
     ("influtri.", "fluxsorter."),
     ("influshop.", "fluxshop."),
+    ("fluxtags.tag.", "fluxcosmetics.tag."),       # FluxTags merged into FluxCosmetics (2026-11-21)
 ]
 
 

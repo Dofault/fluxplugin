@@ -4,7 +4,7 @@ IS a player card. Theme colours of the generic background, light paper body with
 6-row chest, the card lowered by SHIFT rows (2026-10-29: 2 rows), drawn below as if it started on row 0:
   row 0          back (0), title « CARTE JOUEUR », menu icon (8), in the dark header band
   photo          columns 0 to 2, rows 1 to 3: the player's bust (list profile_bust, Flux/assets/buste/gen_buste.py)
-  rank line      row 1, columns 4 to 8: the player's rank tag (%fluxtags_profile%, FluxTags gen_tags.PROFILE_Y)
+  rank line      row 1, columns 4 to 8: the player's rank tag (%fluxcosmetics_tag_profile%, FluxCosmetics assets/tags/gen_tags.PROFILE_Y)
   sections       columns 4 to 7, rows 2 and 3: the 8 sections of the profile
   row 4          signature under the photo, chip
 Slots in menus/profil.yml are these + 9 * SHIFT.

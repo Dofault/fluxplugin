@@ -21,6 +21,8 @@ import java.util.List;
  *   /tenue donner &lt;player&gt; &lt;cosmetic|tout&gt;     give cosmetics (flux.admin, offline players too)
  *   /tenue reprendre &lt;player&gt; &lt;cosmetic|tout&gt;  take them back (flux.admin)
  *   /tenue reload             (flux.admin)
+ *   /tenue tag &lt;player&gt; &lt;tag|aucun&gt;  make a player wear a tag (flux.admin, offline players too)
+ *   /tags [tag]               the wardrobe on the tags, or wear a tag ({@link PlayerTags})
  * </pre>
  */
 public final class FluxCosmetics extends FluxPlugin {
@@ -29,6 +31,7 @@ public final class FluxCosmetics extends FluxPlugin {
     private Wardrobe wardrobe;
     private Outfits outfits;
     private CosmeticsMenu menu;
+    private PlayerTags tags;
 
     @Override
     protected void enable() {
@@ -46,10 +49,13 @@ public final class FluxCosmetics extends FluxPlugin {
         for (Player p : Bukkit.getOnlinePlayers()) outfits.open(p);
         menu = new CosmeticsMenu(this);
         menu.register();
+        tags = new PlayerTags(this);
+        tags.start();
         fr.influencraft.flux.api.command.Commands.Completer admin = (sender, args) -> !Staff.isAdmin(sender) ? List.of()
-                : args.length == 1 ? List.of("porter", "donner", "reprendre", "reload")
+                : args.length == 1 ? List.of("porter", "donner", "reprendre", "tag", "reload")
                 : args.length == 2 && args[0].equalsIgnoreCase("porter") ? outfits.keys()
                 : args.length == 2 ? fr.influencraft.flux.api.util.Players.complete(args[1])
+                : args.length == 3 && args[0].equalsIgnoreCase("tag") ? tags.ids()
                 : args.length == 3 && !args[0].equalsIgnoreCase("porter") ? withAll(both()) : List.of();
         // the wardrobe on the category last looked at
         command("cosmetique")
@@ -72,6 +78,7 @@ public final class FluxCosmetics extends FluxPlugin {
     @Override
     protected void disable() {
         fr.influencraft.flux.api.cosmetics.ClassOutfits.provide(null);
+        if (tags != null) tags.stop();
         if (wardrobe != null) wardrobe.closeAll();
         if (outfits != null) {
             outfits.closeAll();
@@ -84,6 +91,7 @@ public final class FluxCosmetics extends FluxPlugin {
         super.reload();
         settings = Settings.read(getConfig());
         if (outfits != null) outfits.load(getConfig());
+        if (tags != null) tags.settings();
     }
 
     private List<String> both() {
@@ -138,6 +146,10 @@ public final class FluxCosmetics extends FluxPlugin {
         return menu;
     }
 
+    PlayerTags tags() {
+        return tags;
+    }
+
     /** {@code saved}: /tenue, the wardrobe opens on the saved outfits. */
     private boolean onCommand(CommandSender sender, String[] args, boolean saved) {
         if (args.length > 0 && args[0].equalsIgnoreCase("reload") && Staff.isAdmin(sender)) {
@@ -147,6 +159,10 @@ public final class FluxCosmetics extends FluxPlugin {
         }
         if (args.length == 3 && (args[0].equalsIgnoreCase("donner") || args[0].equalsIgnoreCase("reprendre")) && Staff.isAdmin(sender)) {
             giveOrTake(sender, args[0].equalsIgnoreCase("donner"), args[1], args[2]);
+            return true;
+        }
+        if (args.length == 3 && args[0].equalsIgnoreCase("tag") && Staff.isAdmin(sender)) {
+            tags.adminSet(sender, args[1], args[2]);
             return true;
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("porter") && Staff.isAdmin(sender) && sender instanceof Player p) {

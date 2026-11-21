@@ -1,6 +1,5 @@
 package fr.influencraft.fluxcosmetics;
 
-import fr.influencraft.flux.api.FluxAction;
 import fr.influencraft.flux.api.FluxApi;
 import fr.influencraft.flux.api.dialog.Dialogs;
 import fr.influencraft.flux.api.inventory.Items;
@@ -26,7 +25,7 @@ import java.util.Objects;
  *   dialog: save what he wears now over it, rename it, or delete it.</li>
  *   <li>An empty slot: left click saves what he wears now, the dialog asking its name.</li>
  * </ul>
- * The tag goes through FluxTags' own action ({@code [tags] <id> quiet}, read through Flux: no dependency).
+ * The tag is worn through {@link PlayerTags}.
  */
 final class OutfitPresets {
 
@@ -47,7 +46,7 @@ final class OutfitPresets {
 
     List<ListEntry> entries(Player viewer) {
         Map<Integer, Outfits.Preset> saved = plugin.outfits().presets(viewer);
-        String tag = plugin.menu().currentTag(viewer);
+        String tag = plugin.tags().shownTag(viewer);
         List<ListEntry> out = new ArrayList<>();
         for (int n = 1; n <= count(); n++) {
             Outfits.Preset p = saved.get(n);
@@ -74,7 +73,7 @@ final class OutfitPresets {
             lore.kv(label, c == null ? plugin.messages().raw("presets.nothing") : c.name());
         }
         if (p.tag() != null) {
-            String image = plugin.menu().tagImage(viewer, p.tag());
+            String image = plugin.tags().menuImage(viewer, p.tag());
             lore.kv(plugin.messages().raw("presets.tag"), image == null ? p.tag() : "&f:" + image + ":");
         }
         boolean worn = wornNow(viewer, p, tagNow);
@@ -130,9 +129,8 @@ final class OutfitPresets {
             if (key == null) plugin.outfits().takeOff(player, slot);
             else refused |= !plugin.outfits().wear(player, key);
         }
-        if (p.tag() != null && !p.tag().equals(plugin.menu().currentTag(player))) {
-            FluxAction tags = FluxApi.action("tags");
-            if (tags != null) tags.run(player, null, p.tag() + " quiet");
+        if (p.tag() != null && !p.tag().equals(plugin.tags().shownTag(player))) {
+            plugin.tags().pick(player, p.tag(), true);
         }
         Sounds.cue(player, refused ? "error" : "toggle-on");
         changed(player);
@@ -184,7 +182,7 @@ final class OutfitPresets {
     }
 
     private void save(Player player, int n, String typed) {
-        plugin.outfits().savePreset(player, n, plugin.outfits().current(player, name(typed, n), plugin.menu().currentTag(player)));
+        plugin.outfits().savePreset(player, n, plugin.outfits().current(player, name(typed, n), plugin.tags().shownTag(player)));
         Sounds.cue(player, "success");
     }
 

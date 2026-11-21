@@ -21,8 +21,8 @@ import java.util.List;
  * player's inventory rows, the chest above stays empty and transparent: the mannequin is seen over it and wears what
  * is clicked at once.
  *
- * <p>One Flux list, {@code cosmetics}, filtered by category: the four armour slots ({@link Outfits}), the tags,
- * whose entries are those of FluxTags' own list (read through Flux, no dependency), and the saved outfits
+ * <p>One Flux list, {@code cosmetics}, filtered by category: the four armour slots ({@link Outfits}), the tags
+ * ({@link PlayerTags}), and the saved outfits
  * ({@link OutfitPresets}). Flux keeps the category and the
  * page of each player, so the menu opens again where he left it.</p>
  *
@@ -33,7 +33,7 @@ import java.util.List;
  *   [cosmetics] turn &lt;deg&gt;    turn the wardrobe's camera around the mannequin
  *   [cosmetics] category &lt;n&gt;  shows a category of his universe (the camera frames it), refused otherwise
  *   [cosmetics] frame         the camera frames the category now shown
- *   [cosmetics] tags          the wardrobe on the tags, from anywhere (FluxTags' /tags)
+ *   [cosmetics] tags          the wardrobe on the tags, from anywhere (/tags)
  *   [cosmetics] rpg &lt;key&gt;     chooses his rpg outfit ({@link RpgOutfits})
  *   [cosmetics] rpg-here &lt;key&gt; an admin wears an rpg outfit outside the rpg universe (again: off)
  *   [cosmetics] opened|closed the menu shows or not (the camera makes room for it)
@@ -44,9 +44,7 @@ import java.util.List;
  */
 final class CosmeticsMenu {
 
-    static final String MENU = "cosmetiques", LIST = "cosmetics", TAGS_LIST = "tags";
-    /** Ids of FluxTags' "no tag" and rank tag entries. */
-    private static final String NO_TAG = "aucun", RANK_TAG = "rang";
+    static final String MENU = "cosmetiques", LIST = "cosmetics";
 
     /** The categories in filter order: the four armour slots, the tags, the saved outfits. */
     private static final EquipmentSlot[] SLOTS = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
@@ -90,6 +88,20 @@ final class CosmeticsMenu {
         if (view != null) view.frame(category);
     }
 
+    /** The wardrobe on the tags (/tags, the profile): the menu on that category, the wardrobe opened when needed. */
+    void showTags(Player player) {
+        Lists.act(player, LIST, "filter " + TAGS, 14);
+        WardrobeView view = plugin.wardrobe().view(player);
+        if (view != null) {
+            view.frame(TAGS);
+            open(player);
+        } else {
+            // from a menu (the profile) or a command: the wardrobe opens on that category
+            player.closeInventory();
+            plugin.wardrobe().open(player);
+        }
+    }
+
     /** Opens the menu on the category and page he last looked at. */
     void open(Player player) {
         int shown = Lists.state(player, LIST).filter();
@@ -119,15 +131,7 @@ final class CosmeticsMenu {
         String arg = parts.length > 1 ? parts[1].trim() : "";
         WardrobeView view = plugin.wardrobe().view(player);
         if (parts[0].equals("tags")) {
-            Lists.act(player, LIST, "filter " + TAGS, 14);
-            if (view != null) {
-                view.frame(TAGS);
-                open(player);
-            } else {
-                // from a menu (the profile) or a command: the wardrobe opens on that category
-                player.closeInventory();
-                plugin.wardrobe().open(player);
-            }
+            showTags(player);
             return;
         }
         if (parts[0].startsWith("preset-")) {
@@ -240,55 +244,9 @@ final class CosmeticsMenu {
     private List<ListEntry> entries(Player viewer, int category) {
         List<ListEntry> out = !allowed(viewer, category) ? new ArrayList<>()
                 : category == RPG ? rpgEntries(viewer)
-                : category == PRESETS ? presets.entries(viewer) : category == TAGS ? tags(viewer) : pieces(viewer, category);
+                : category == PRESETS ? presets.entries(viewer) : category == TAGS ? plugin.tags().menuEntries(viewer) : pieces(viewer, category);
         // only the saved outfits answer a right click
         for (ListEntry e : out) if (!e.values().containsKey("clic_droit")) e.set("clic_droit", "");
-        return out;
-    }
-
-    /** FluxTags' entries as its own menu shows them, read through Flux; null when FluxTags is not there. */
-    private List<ListEntry> tagEntries(Player viewer) {
-        ListProvider tags = Lists.provider(TAGS_LIST);
-        return tags == null ? List.of() : tags.entries(new ListQuery(viewer, TAGS_LIST, 0, 0, ""));
-    }
-
-    private static boolean glinting(ListEntry e) {
-        var meta = e.item() == null ? null : e.item().getItemMeta();
-        return meta != null && meta.hasEnchantmentGlintOverride() && meta.getEnchantmentGlintOverride();
-    }
-
-    /** Id of the tag he shows now (FluxTags makes it glint in its list), null when unknown. */
-    String currentTag(Player player) {
-        for (ListEntry e : tagEntries(player)) if (glinting(e)) return e.id();
-        return null;
-    }
-
-    /** Picture of a tag for him (the {@code image} of FluxTags' entry), null when unknown. */
-    String tagImage(Player player, String tag) {
-        for (ListEntry e : tagEntries(player)) if (e.id().equals(tag)) return e.values().get("image");
-        return null;
-    }
-
-    private List<ListEntry> tags(Player viewer) {
-        // the tags: FluxTags' own entries (item, click action), as its menu shows them
-        List<ListEntry> entries = tagEntries(viewer);
-        if (entries.isEmpty()) return new ArrayList<>();
-        // picked without a chat line: the mannequin shows the tag
-        List<ListEntry> out = new ArrayList<>();
-        boolean rankShown = false;
-        for (ListEntry e : entries) {
-            // "no tag at all" left out: taking a tag off brings the rank's back (the barrier below)
-            if (e.id().equals(NO_TAG)) continue;
-            String click = e.values().get("clic");
-            boolean shown = glinting(e);
-            if (e.id().equals(RANK_TAG)) rankShown = shown;
-            // the worn tag clicked again comes off: back to the rank's tag, never to no tag at all
-            if (shown && !e.id().equals(RANK_TAG)) e.set("clic", "[tags] " + RANK_TAG + " quiet");
-            else if (shown) e.set("clic", "[sound] @error");
-            else if (click != null && click.startsWith("[tags] ")) e.set("clic", click + " quiet");
-            out.add(e);
-        }
-        out.addFirst(noTag(viewer, rankShown));
         return out;
     }
 
@@ -393,17 +351,6 @@ final class CosmeticsMenu {
         if (bare && item != null) glint(item);
         return ListEntry.of("none").item(item)
                 .set("clic", bare ? "[sound] @error" : "[cosmetics] none " + slot.name());
-    }
-
-    /** First choice of the tags: a barrier that takes the worn tag off, the rank's tag showing again. */
-    private ListEntry noTag(Player viewer, boolean rankShown) {
-        Lore lore = Lore.create().description(plugin.messages().raw("menu.no-tag-description"));
-        if (rankShown) lore.ok(plugin.messages().raw("menu.no-tag-current"));
-        else lore.left(plugin.messages().raw("menu.take-off"));
-        ItemStack item = Items.of("BARRIER", plugin.messages().raw("menu.none-name"), lore.build(), viewer);
-        if (rankShown && item != null) glint(item);
-        return ListEntry.of("none").item(item)
-                .set("clic", rankShown ? "[sound] @error" : "[tags] " + RANK_TAG + " quiet");
     }
 
     private ItemStack categoryButton(Player player, int category) {

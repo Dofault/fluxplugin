@@ -2,11 +2,17 @@ name: FluxCosmetics
 version: 0.1.0
 main: fr.influencraft.fluxcosmetics.FluxCosmetics
 api-version: "26.2"
-description: Cosmetics of the players - outfits shown over the armour, chosen in a wardrobe seen from outside.
+description: Cosmetics of the players - outfits shown over the armour and the tag before the name, chosen in a wardrobe seen from outside.
 authors: [Influencraft]
 depend: [Flux]
 
 permissions:
   fluxcosmetics.use:
-    description: Open the wardrobe (/cosmetique, /tenue).
+    description: Open the wardrobe (/cosmetique, /tenue, /tags) and wear tags.
     default: true
+  fluxcosmetics.tag.beta:
+    description: Unlocks the « Bêta » tag.
+    default: false
+  fluxcosmetics.tag.createur:
+    description: Unlocks the « Créateur » tag.
+    default: false

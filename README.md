@@ -31,7 +31,6 @@ the player's inventory and draw buttons over it. Developed for the Influencraft 
 | **FluxCrate** | Crates and keys, opened and previewed in Flux menus (replaces EcoCrates) | EcoCrates |
 | **FluxSorter** | Sorting chests and sorting golem (Lands) | — |
 | **FluxFamily** | Couples, paid marriage, couple home, adoption and family trees (a sponsor of FluxReferral is the parent of his referrals) | — |
-| **FluxTags** | Collectible player tags (rank, evolving job tags, specials), one shown in the chat and tab list | — |
 | **FluxArmor** | Armour sets with full and partial bonuses, in real 3D through the resource pack's entity shader (replaces EcoArmor) | InfluArmor |
 | **FluxTools** | Levelled crate tools, plus optional utility modules (jobs menu and XP boss bar, money action bar, /repair, /bottlexp, enchanted book splitter, Mending lock, anvil rules) | optional |
 | **FluxWebsite** | Bridge with the website: shop deliveries, vote rewards (/voteclaims), Vote Party, vote reminder and streak | — |

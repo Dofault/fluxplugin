@@ -1,14 +1,14 @@
 package fr.influencraft.fluxfamily;
 
 import fr.influencraft.fluxfamily.api.Family;
-import fr.influencraft.fluxtags.api.Tags;
+import fr.influencraft.flux.api.cosmetics.Tags;
 
 import java.util.UUID;
 
 /**
- * Tags of FluxFamily in FluxTags (only loaded when FluxTags runs): « situation », always unlocked, showing the
- * relationship status (célibataire, en couple, marié), and « divorce », unlocked for good by leaving a marriage.
- * Images: {@code fluxtags:<id>} (FluxTags/assets/gen_tags.py).
+ * Tags of FluxFamily, given to the cosmetics plugin through Flux ({@link Tags}): « situation », always unlocked,
+ * showing the relationship status (célibataire, en couple, marié), and « divorce », unlocked for good by leaving a
+ * marriage. Images: {@code fluxtags:<id>} (FluxCosmetics/assets/tags/gen_tags.py).
  */
 final class FamilyTags {
 
