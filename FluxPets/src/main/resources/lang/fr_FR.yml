@@ -158,6 +158,7 @@ pet-settings:
 # Menus of the pets (lists built by FluxPets, PetMenuLists)
 menu:
   level-suffix: "&#FFD94DNiv. %level%"
+  effect: "Effet"
   progress: "Progression"
   see-progress: "Voir la progression"
   put-away: "Ranger"

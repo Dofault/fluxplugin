@@ -76,9 +76,10 @@ public final class PetMenuLists {
      * A pet's effect lines (effects-description, rewards-description of its file) in the suite's style (2026-11-16):
      * « Name : value » is a key : value; a name followed by its indented explanation is a key : value too (the
      * explanation as value, the indented lines under a « Name : value » added to its value); any other sentence a
-     * description. The colours of the files are dropped: style.yml colours everything.
+     * description. The colours of the files are dropped: style.yml colours everything. An effect's name is never
+     * shown to players (2026-11-21): a name followed by its explanation is keyed by {@code effectLabel} (« Effet »).
      */
-    static void effects(Lore lore, List<String> lines) {
+    static void effects(Lore lore, List<String> lines, String effectLabel) {
         String key = null;
         StringBuilder value = null;
         String glue = " ";
@@ -100,7 +101,7 @@ public final class PetMenuLists {
                 value = new StringBuilder(text.substring(colon + 3));
                 glue = " · ";
             } else if (titled) {
-                key = text;
+                key = effectLabel;
                 value = new StringBuilder();
                 glue = " ";
             } else lore.description(text);
@@ -115,7 +116,7 @@ public final class PetMenuLists {
     private Lore sheet(Player player, Pet pet) {
         int level = PetData.level(player, pet);
         Lore lore = Lore.create().description(COLOURS.matcher(pet.description()).replaceAll(""));   // style.yml colours it
-        effects(lore, pet.effectsDescription(Math.max(1, level)));
+        effects(lore, pet.effectsDescription(Math.max(1, level)), t("effect"));
         if (pet.slots() > 1) lore.info(t("slots-taken", "%slots%", String.valueOf(pet.slots())));
         if (pet.mountable() && Pets.mountsEnabled()) {
             lore.info(t("mount-from", "%level%", String.valueOf(pet.mount().level())));
@@ -213,7 +214,7 @@ public final class PetMenuLists {
         int level = PetData.level(player, pet);
         for (int n = 1; n <= Math.min(10, pet.maxLevel()); n++) {
             Lore lore = Lore.create();
-            effects(lore, pet.rewardsDescription(n));
+            effects(lore, pet.rewardsDescription(n), t("effect"));
             String icon;
             if (n <= level) {
                 icon = "itemsadder:influitems:checkmark";
