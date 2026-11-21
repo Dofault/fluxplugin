@@ -60,13 +60,15 @@ def couchant():
     k.setup("couchant", {"G": "#D9A93F", "H": "#F2D27A", "O": "#9C722A", "D": "#2A1F3D", "M": "#6B3A5E", "A": "#C96F3A",
                          "W": "#8A5A78"},
             {"gold": (soft("G", "H", "O"), "H", "O"), "lens": (lambda w, h: ["D" * w] * h, "D", "A")})
+    # The front sits 0.9 pixel back, astride the skin's second layer (which ends at 4.5): close to the face on any skin,
+    # its front still clear of that layer.
     lens = ["DWDD", "MMMM", "AAAA"]  # night violet down to amber, one soft glint (never white: it would read as an eye)
     return [
-        Cube("barre", [-5, 29, 5], [5, 30, 6], "gold", north=None),
-        Cube("verre_droit", [-5, 26, 5], [-1, 29, 6], "lens", south=lens, up=None, west="O", east="O", down="O"),
-        Cube("verre_gauche", [1, 26, 5], [5, 29, 6], "lens", south=lens, up=None, west="O", east="O", down="O"),
-        Cube("branche_droite", [-5, 29, -2], [-4.5, 30, 5], "gold", east=None, south=None),
-        Cube("branche_gauche", [4.5, 29, -2], [5, 30, 5], "gold", west=None, south=None),
+        Cube("barre", [-5, 29, 4.1], [5, 30, 5.1], "gold", north=None),
+        Cube("verre_droit", [-5, 26, 4.1], [-1, 29, 5.1], "lens", south=lens, up=None, west="O", east="O", down="O"),
+        Cube("verre_gauche", [1, 26, 4.1], [5, 29, 5.1], "lens", south=lens, up=None, west="O", east="O", down="O"),
+        Cube("branche_droite", [-5, 29, -2], [-4.5, 30, 4.1], "gold", east=None, south=None),
+        Cube("branche_gauche", [4.5, 29, -2], [5, 30, 4.1], "gold", west=None, south=None),
     ]
 
 
