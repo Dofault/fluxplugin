@@ -149,9 +149,9 @@ STYLES["plaque"] = plaque
 TALL_ROWS = (0, 1, 1, 2, 3, 3, 4)
 
 
-# letters whose thickened shape fills in: drawn fat by hand (7 px wide)
-FAT = {"M": ["##...##", "###.###", "#######", "##.#.##", "##...##"],
-       "W": ["##...##", "##.#.##", "#######", "###.###", "##...##"]}
+# letters whose thickened shape fills in: drawn fat by hand (8 px wide, every stroke 2 px like the others)
+FAT = {"M": ["##....##", "###..###", "########", "##.##.##", "##....##"],
+       "W": ["##....##", "##.##.##", "########", "###..###", "##....##"]}
 
 
 def fat_points(name):
