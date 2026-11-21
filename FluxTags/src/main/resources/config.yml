@@ -9,10 +9,13 @@ rank-placeholder: "%luckperms_current_group_on_track_standard%"
 # Job tags: unlocked at the first level, a new look at each next level (6 tiers: Commun ... Fabuleux).
 job-tiers: [50, 100, 150, 200, 250, 300]
 
-# Tags worn by a player who never picked one: the first of this list he has unlocked, else his rank.
-default-tags: [admin, operateur]
+# Tag worn by a player who never picked one, by main group (when he has that tag), else his rank.
+default-tags:
+  admin: admin
+  operateur: operateur
 
-# Special tags, unlocked by a permission (fluxtags.tag.<id>). hidden: true = only listed in /tags for who has it.
+# Special tags, unlocked by fluxtags.tag.<id>, or by their own "permission" (staff tags: flux.admin, the one admin
+# node of the suite). hidden: true = only listed in /tags for who has it.
 # shortcut: a command of its own that wears the tag (renamed like any other in plugins/Flux/commands.yml).
 specials:
   beta:
@@ -24,10 +27,12 @@ specials:
   operateur:
     name: "Operator"
     description: "Staff tag of the operators."
+    permission: flux.admin
     hidden: true
     shortcut: "_o"
   admin:
     name: "Admin"
     description: "Staff tag of the administrators."
+    permission: flux.admin
     hidden: true
     shortcut: "_a"

@@ -44,11 +44,12 @@ import java.util.concurrent.ConcurrentHashMap;
  *   <li>{@code rang} (shown until the player picks another tag or none): follows his current rank (an older rank's
  *   tag cannot be kept);</li>
  *   <li>{@code metier_<job>}: unlocked at the first job tier (level 50), then a new look at every tier up to 300;</li>
- *   <li>specials ({@code specials} of the config): unlocked by {@code fluxtags.tag.<id>}; {@code hidden} ones
- *   (staff tags) are only listed for who has them, {@code shortcut} gives one a command of its own.</li>
+ *   <li>specials ({@code specials} of the config): unlocked by {@code fluxtags.tag.<id>}, or by the tag's own
+ *   {@code permission} (staff tags: {@code flux.admin}, the one admin node of the suite); {@code hidden} ones are
+ *   only listed for who has them, {@code shortcut} gives one a command of its own.</li>
  * </ul>
- * A player who never picked wears the first tag of {@code default-tags} he has unlocked (a staff member his staff
- * tag), else his rank. {@code /tags <tag>} wears a tag without the menu.
+ * A player who never picked wears the tag {@code default-tags} gives his main group (a staff member his staff tag)
+ * when he has it, else his rank. {@code /tags <tag>} wears a tag without the menu.
  * Images: pack {@code fluxtags} of ItemsAdder ({@code assets/gen_tags.py}), glyph {@code <image>} for the chat and
  * {@code <image>_r<row>} for row 1 to 5 of the menu, {@code rang_<rank>_p} for the profile. Placeholders:
  * {@code %fluxtags_tag%}, {@code %fluxtags_tag_spaced%}, {@code %fluxtags_name%}, {@code %fluxtags_unlocked%},
@@ -84,7 +85,8 @@ public final class FluxTags extends FluxPlugin implements Listener {
     private String table;
     private List<Integer> tiers = List.of(50, 100, 150, 200, 250, 300);
     private String rankPlaceholder;
-    private List<String> defaults = List.of();
+    /** Main group -> tag worn by a player of that group who never picked one. */
+    private final Map<String, String> defaults = new HashMap<>();
     private boolean jobsLoaded;
 
     @Override
@@ -186,7 +188,7 @@ public final class FluxTags extends FluxPlugin implements Listener {
             if (label.isEmpty()) continue;
             command("tag_" + id)
                     .description("Wear the tag " + specials.getString(id + ".name", id) + ".")
-                    .permission("fluxtags.tag." + id)
+                    .permission(permission(id))
                     .aliases(label)
                     .suggest(false)
                     .executor((sender, typed, args) -> {
@@ -200,7 +202,11 @@ public final class FluxTags extends FluxPlugin implements Listener {
 
     private void settings() {
         rankPlaceholder = getConfig().getString("rank-placeholder", "%luckperms_current_group_on_track_standard%");
-        defaults = getConfig().getStringList("default-tags");
+        defaults.clear();
+        ConfigurationSection byGroup = getConfig().getConfigurationSection("default-tags");
+        if (byGroup != null) for (String group : byGroup.getKeys(false)) {
+            defaults.put(group.toLowerCase(Locale.ROOT), byGroup.getString(group, ""));
+        }
         tiers = getConfig().getIntegerList("job-tiers");
         if (tiers.isEmpty()) tiers = List.of(50, 100, 150, 200, 250, 300);
         catalogue.clear();
@@ -239,10 +245,15 @@ public final class FluxTags extends FluxPlugin implements Listener {
             int tier = tier(p, t.job());
             return tier == 0 ? null : "metier_" + t.job() + "_" + tier;
         }
-        if (t.special() != null) return p.hasPermission("fluxtags.tag." + t.special()) ? t.special() : null;
+        if (t.special() != null) return p.hasPermission(permission(t.special())) ? t.special() : null;
         if (t.provided() != null) return t.provided().image().apply(p);
         String rank = Texts.placeholders(rankPlaceholder, p).trim().toLowerCase(Locale.ROOT);
         return rank.isEmpty() || rank.indexOf('%') >= 0 ? null : "rang_" + rank;
+    }
+
+    /** Node unlocking a special tag: its {@code permission}, else {@code fluxtags.tag.<id>}. */
+    private String permission(String special) {
+        return getConfig().getString("specials." + special + ".permission", "fluxtags.tag." + special);
     }
 
     private int level(Player p, String job) {
@@ -260,11 +271,11 @@ public final class FluxTags extends FluxPlugin implements Listener {
         String picked = selected.computeIfAbsent(id, this::read);
         if (!picked.equals(UNSET)) return picked;
         Player p = Bukkit.getPlayer(id);
-        if (p != null) {
-            for (String tag : defaults) {
-                Tag t = catalogue.get(tag);
-                if (t != null && image(p, t) != null) return tag;
-            }
+        if (p != null && !defaults.isEmpty()) {
+            String group = fr.influencraft.flux.api.permission.PlayerMeta.group(p);
+            String tag = group == null ? null : defaults.get(group.toLowerCase(Locale.ROOT));
+            Tag t = tag == null ? null : catalogue.get(tag);
+            if (t != null && image(p, t) != null) return tag;
         }
         return RANK;
     }

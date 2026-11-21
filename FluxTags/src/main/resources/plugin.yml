@@ -16,9 +16,3 @@ permissions:
   fluxtags.tag.createur:
     description: Unlocks the « Créateur » tag.
     default: false
-  fluxtags.tag.operateur:
-    description: Unlocks the operator staff tag (and its shortcut command).
-    default: false
-  fluxtags.tag.admin:
-    description: Unlocks the admin staff tag (and its shortcut command).
-    default: false
