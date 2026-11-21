@@ -279,23 +279,28 @@ final class CosmeticsMenu {
         return out;
     }
 
-    /** His rpg outfits: his class's first, then the others, the worn one glowing. */
+    /** His rpg outfits: his class's first, then the others of his class, then the rest, the worn one glowing. */
     private List<ListEntry> rpgEntries(Player viewer) {
         RpgOutfits rpg = plugin.outfits().rpg();
         RpgOutfits.Outfit mine = rpg.classOutfit(viewer);
         RpgOutfits.Outfit worn = rpg.active(viewer, plugin.outfits().rpgChoice(viewer));
         boolean admin = fr.influencraft.flux.api.staff.Staff.isAdmin(viewer) && !rpg.in(viewer);
+        String cls = rpg.classOf(viewer);
         List<RpgOutfits.Outfit> all = new ArrayList<>(rpg.all());
-        if (mine != null && all.remove(mine)) all.addFirst(mine);
+        // stable sort: rarity order kept inside each group
+        all.sort(java.util.Comparator.comparingInt(o -> o.equals(mine) ? 0 : !cls.isEmpty() && cls.equals(o.heroClass()) ? 1 : 2));
         List<ListEntry> out = new ArrayList<>();
         for (RpgOutfits.Outfit o : all) {
             boolean wearing = o.equals(worn), owned = rpg.owns(viewer, o);
             Lore lore = Lore.create();
             if (o.equals(mine)) lore.description(plugin.messages().raw("menu.rpg-class-outfit"));
             lore.kv(plugin.messages().raw("menu.rarity"), "&" + o.rarity().colour() + plugin.messages().raw("rarities." + o.rarity().id()));
+            String className = o.heroClass().isEmpty() ? "" : rpg.className(viewer, o.heroClass());
+            if (!className.isEmpty()) lore.kv(plugin.messages().raw("menu.rpg-class"), className);
+            if (o.level() > 0) lore.kv(plugin.messages().raw("menu.rpg-level"), String.valueOf(o.level()));
             if (wearing) lore.ok(plugin.messages().raw("menu.worn"));
             if ((admin && plugin.outfits().wornHere(viewer, o))) lore.ok(plugin.messages().raw("menu.rpg-here-worn"));
-            if (!owned) lore.ko(plugin.messages().raw("menu.locked"));
+            if (!owned) lore.ko(lockReason(viewer, rpg, o, className));
             else if (!wearing) lore.left(plugin.messages().raw("menu.wear"));
             if (admin) lore.right(plugin.messages().raw((admin && plugin.outfits().wornHere(viewer, o)) ? "menu.rpg-here-off" : "menu.rpg-here"));
             ItemStack piece = rpg.item(o, EquipmentSlot.CHEST);
@@ -309,6 +314,15 @@ final class CosmeticsMenu {
             out.add(entry);
         }
         return out;
+    }
+
+    /** What keeps an rpg outfit from him: the class to embody first, then the level to reach in it. */
+    private String lockReason(Player viewer, RpgOutfits rpg, RpgOutfits.Outfit o, String className) {
+        if (!o.heroClass().isEmpty() && !o.heroClass().equals(rpg.classOf(viewer)))
+            return plugin.messages().raw("menu.rpg-needs-class", "%class%", className);
+        if (o.level() > 0 && rpg.levelOf(viewer) < o.level())
+            return plugin.messages().raw("menu.rpg-needs-level", "%level%", String.valueOf(o.level()), "%class%", className);
+        return plugin.messages().raw("menu.locked");
     }
 
     private List<ListEntry> pieces(Player viewer, int category) {

@@ -188,7 +188,8 @@ public final class RpgModule implements Listener {
     /**
      * {@code %fluxrpg_<params>%}: the player's rpg character, read by the class pages. class, level_text, level, xp_text,
      * xp_pct, health, health_max, health_pct, mana, mana_max, mana_pct, has_class (yes/no), is_<class> (yes/no),
-     * class_id, weapon (name of the class's apprentice weapon),
+     * class_id, weapon (name of the class's apprentice weapon), hero_class and hero_level (his class id and its level
+     * wherever he is, "" and 0 while unknown or without a class), class_name_<class> (display name of a class),
      * stat_<stat> (its total), zero_<stat> ("zero" when it is 0).
      */
     private String placeholder(Player p, String params) {
@@ -197,6 +198,12 @@ public final class RpgModule implements Listener {
         RpgConfig.Set set = config.get();
         var m = plugin.messages();
         boolean on = r != null && set != null && r.stats() != null;
+        if (params.startsWith("class_name_")) return m.raw("classes." + params.substring(11) + ".name");
+        if (params.equals("hero_class") || params.equals("hero_level")) {
+            String[] hero = players.hero(p);
+            if (hero == null) return params.equals("hero_class") ? "" : "0";
+            return params.equals("hero_class") ? hero[0] : hero[1];
+        }
         if (params.startsWith("is_")) return on && r.heroClass().id().equals(params.substring(3)) ? "yes" : "no";
         if (params.startsWith("stat_") || params.startsWith("zero_")) {
             String stat = params.substring(5);

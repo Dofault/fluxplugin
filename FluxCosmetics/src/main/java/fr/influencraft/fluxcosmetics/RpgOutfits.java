@@ -32,13 +32,20 @@ import java.util.UUID;
  * ({@link Outfits#show}).
  *
  * <p>Linked with FluxDungeons through Flux only: the universe from {@link Universes}, the class from the placeholder
- * {@code %fluxrpg_class_id%}. Entering a universe draws the right looks at once ({@link UniverseEnterEvent}); a class
+ * {@code %fluxrpg_hero_class%} and its level from {@code %fluxrpg_hero_level%} (wherever he is). Entering a universe draws the right looks at once ({@link UniverseEnterEvent}); a class
  * change is seen within two seconds.</p>
  */
 final class RpgOutfits implements Listener {
 
-    /** An rpg outfit: the item of each armour slot it covers (a slot it has none for shows the real piece). */
-    record Outfit(String key, String name, Outfits.Rarity rarity, Map<EquipmentSlot, String> pieces, boolean free) {
+    /**
+     * An rpg outfit: the item of each armour slot it covers (a slot it has none for shows the real piece). heroClass:
+     * the class he must embody to wear it ("" = any), level: the level he must have reached in it (0 = none).
+     */
+    record Outfit(String key, String name, Outfits.Rarity rarity, Map<EquipmentSlot, String> pieces, boolean free,
+                  String heroClass, int level) {
+        boolean restricted() {
+            return !heroClass.isEmpty() || level > 0;
+        }
     }
 
     private static final String[] PIECES = {"helmet", "chestplate", "leggings", "boots"};
@@ -70,13 +77,16 @@ final class RpgOutfits implements Listener {
                 if (item != null && !item.isBlank()) pieces.put(Outfits.ARMOUR[i], item);
             }
             catalog.put(key, new Outfit(key, o.getString("name", key), outfits.rarity(o.getString("rarity")), Map.copyOf(pieces),
-                    o.getBoolean("free", false)));
+                    o.getBoolean("free", false), o.getString("class", ""), Math.max(0, o.getInt("level", 0))));
         }
         byClass.clear();
         ConfigurationSection c = config.getConfigurationSection("rpg-class-outfits");
         if (c != null) for (String cls : c.getKeys(false)) {
             String key = c.getString(cls);
-            if (catalog.containsKey(key)) byClass.put(cls, key);
+            Outfit o = catalog.get(key);
+            if (o != null && !o.heroClass().isEmpty() && !o.heroClass().equals(cls) && !cls.equals("default"))
+                plugin.getLogger().warning("rpg-class-outfits." + cls + ": " + key + " is for the class " + o.heroClass());
+            if (o != null) byClass.put(cls, key);
             else plugin.getLogger().warning("rpg-class-outfits." + cls + ": no rpg outfit " + key);
         }
         drawnClass.clear();
@@ -121,11 +131,38 @@ final class RpgOutfits implements Listener {
         return List.copyOf(catalog.keySet());
     }
 
-    /** His rpg class id, "" when none (read from FluxDungeons through Flux). */
+    /** His rpg class id wherever he is, "" when none or not known yet (read from FluxDungeons through Flux). */
     String classOf(Player player) {
-        PlaceholderProvider rpg = FluxApi.placeholders("fluxrpg");
-        String id = rpg == null ? null : rpg.request(player, "class_id");
+        String id = rpg(player, "hero_class");
+        if (id == null) id = rpg(player, "class_id");   // FluxDungeons before hero_class: in the rpg universe only
         return id == null ? "" : id;
+    }
+
+    /** His level in his rpg class wherever he is, 0 when none or not known yet. */
+    int levelOf(Player player) {
+        try {
+            String level = rpg(player, "hero_level");
+            return Integer.parseInt(level != null ? level : rpg(player, "level"));
+        } catch (NumberFormatException | NullPointerException e) {
+            return 0;
+        }
+    }
+
+    /** Display name of a class (FluxDungeons's language file), its id when unknown. */
+    String className(Player player, String classId) {
+        String name = rpg(player, "class_name_" + classId);
+        return name == null || name.isBlank() ? classId : name;
+    }
+
+    private static String rpg(Player player, String params) {
+        PlaceholderProvider rpg = FluxApi.placeholders("fluxrpg");
+        return rpg == null ? null : rpg.request(player, params);
+    }
+
+    /** Whether he meets what the outfit asks: he embodies its class and has reached its level in it. */
+    boolean meets(Player player, Outfit o) {
+        if (!o.heroClass().isEmpty() && !o.heroClass().equals(classOf(player))) return false;
+        return o.level() <= 0 || levelOf(player) >= o.level();
     }
 
     /** The outfit of his class, never null while any outfit exists ({@code default} for a class without one). */
@@ -147,11 +184,15 @@ final class RpgOutfits implements Listener {
         return out;
     }
 
-    /** Whether he may wear it: his class's, free, given to him, or he is an admin. */
+    /**
+     * Whether he may wear it. Admins wear everything. An outfit with a class or a level is his only while he embodies
+     * that class at that level (given or free, it still asks for both); without one: free, given, or his class's.
+     */
     boolean owns(Player player, Outfit o) {
         if (o == null) return false;
-        if (o.free() || Staff.isAdmin(player) || o.equals(classOutfit(player))) return true;
-        return outfits.given(player, o.key());
+        if (Staff.isAdmin(player)) return true;
+        if (o.restricted()) return meets(player, o);
+        return o.free() || o.equals(classOutfit(player)) || outfits.given(player, o.key());
     }
 
     /** What he wears in the rpg universe: his choice when it is still his, else his class's. */
