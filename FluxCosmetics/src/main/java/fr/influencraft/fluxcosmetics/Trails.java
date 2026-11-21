@@ -19,8 +19,9 @@ import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Particles around the wearer of a cosmetic (its {@code trail}, one of the {@code trails} of the config): the astral
- * cape. One dust particle now and then behind him, between his knees and his shoulders, going from one colour to
- * another while it fades; the client lets it drift and die within two seconds.
+ * cape, the cosmic hat, the Ender Dragon crown. One dust particle now and then, behind him (a cape) or anywhere on a
+ * ring around him ({@code ring: true}, a hat), going from one colour to another while it fades; the client lets it
+ * drift and die within two seconds.
  *
  * <p>Nothing is kept per player: a trail stops with the tick after its cosmetic is taken off, its wearer leaves,
  * turns invisible or enters the wardrobe (he is its camera then, his mannequin shows the cosmetic), and no entity is
@@ -35,9 +36,11 @@ final class Trails {
 
     /**
      * {@code colours}: pairs (first colour, colour it turns into), one pair picked per particle; {@code period}: ticks
-     * between two particles; heights above his feet and distances in blocks.
+     * between two particles; heights above his feet and distances in blocks; {@code ring}: on a circle of that radius
+     * around him rather than behind him.
      */
-    private record Trail(List<Color[]> colours, int period, float size, double low, double high, double radius, double behind) {
+    private record Trail(List<Color[]> colours, int period, float size, double low, double high, double radius, double behind,
+                         boolean ring) {
     }
 
     private final FluxCosmetics plugin;
@@ -73,7 +76,7 @@ final class Trails {
             double low = c.getDouble("low", 0.45);
             trails.put(id, new Trail(List.copyOf(colours), Math.max(1, c.getInt("period", 5)),
                     (float) Math.clamp(c.getDouble("size", 0.6), 0.1, 4), low, Math.max(low, c.getDouble("high", 1.35)),
-                    Math.max(0, c.getDouble("radius", 0.5)), c.getDouble("behind", 0.35)));
+                    Math.max(0, c.getDouble("radius", 0.5)), c.getDouble("behind", 0.35), c.getBoolean("ring", false)));
         }
     }
 
@@ -114,13 +117,26 @@ final class Trails {
 
     private void emit(Player p, Trail trail) {
         ThreadLocalRandom random = ThreadLocalRandom.current();
+        Location at;
+        if (trail.ring()) {
+            double angle = random.nextDouble(Math.PI * 2), r = trail.radius() * random.nextDouble(0.75, 1.0);
+            at = p.getLocation().add(Math.cos(angle) * r, random.nextDouble(trail.low(), trail.high() + 1e-6), Math.sin(angle) * r);
+            send(p, trail, at);
+            return;
+        }
         double yaw = Math.toRadians(p.getBodyYaw());
         // behind him: the opposite of where his body faces; side: along his shoulders
         double backX = Math.sin(yaw), backZ = -Math.cos(yaw);
         double side = random.nextDouble(-trail.radius(), trail.radius() + 1e-6);
         double depth = trail.behind() + random.nextDouble(0.15);
-        Location at = p.getLocation().add(backX * depth + Math.cos(yaw) * side,
+        at = p.getLocation().add(backX * depth + Math.cos(yaw) * side,
                 random.nextDouble(trail.low(), trail.high() + 1e-6), backZ * depth + Math.sin(yaw) * side);
+        send(p, trail, at);
+    }
+
+    /** One particle at that place, for him and those who see him. */
+    private void send(Player p, Trail trail, Location at) {
+        ThreadLocalRandom random = ThreadLocalRandom.current();
         Color[] pair = trail.colours().get(random.nextInt(trail.colours().size()));
         Particle.DustTransition dust = new Particle.DustTransition(pair[0], pair[1], trail.size());
         for (Player viewer : p.getWorld().getPlayers()) {

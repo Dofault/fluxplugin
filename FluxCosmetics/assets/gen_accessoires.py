@@ -586,6 +586,18 @@ def delivery_bag():
     ] + straps(12)
 
 
+def bow_tie():
+    """AETHERIA's bow tie (collection of 2026-11-21, its own palette): ruby wings pinched at a knot, coral light."""
+    k.setup("bow_tie", {"R": "#B94450", "2": "#762D36", "C": "#E87569", "K": "#171923", "I": "#F0E8D8", "P": "#C5C5C9"},
+                       {"silk": (lambda w, h: paint(w, h, lambda x, y: "2" if y == h - 1 else "C" if y == 0 and x < w - 1 else "R"), "C", "2")})
+    wing = Cube("aile_droite", [-4.5, 20, SKIN], [-1, 23.5, SKIN + 1.2], "silk", rot=(0, 0, 10), origin=[-1, 21.75, SKIN],
+                north=None, east=None, south=["CCR2", "CRR2", "RR22", "R222"])
+    return [Cube("col", [-5, 22, SKIN], [5, 24, SKIN + 0.4], "silk", south=["IIII..IIII", ".IIP..PII."], north=None,
+                 west=None, east=None, up=None, down=None),
+            wing, mirror(wing),
+            box("noeud", [-1, 20.5, SKIN], [1, 23, SKIN + 1.6], "silk", hide="north", south=["CR", "R2"])]
+
+
 # ---------------------------------------------------------------------------------------- catalogue
 
 # id: (builder, French name, colour of the name, inventory icon seen from behind)
@@ -612,6 +624,7 @@ ACCESSORIES = {
     "back_plush_dragon": (back_plush_dragon, "Peluche Dragonnet", "#588DB0", True),
     "delivery_bag": (delivery_bag, "Sac du Coursier", "#B65C68", True),
     "cape_astral": (cape_astral, "Cape Astrale", "#A18AC4", True),
+    "bow_tie": (bow_tie, "Nœud papillon", "#B94450", False),
 }
 LIMBS = ("plastron_torse", "plastron_bras_droit", "jambieres_torse", "jambieres_jambe_droite", "bottes_jambe_droite")
 

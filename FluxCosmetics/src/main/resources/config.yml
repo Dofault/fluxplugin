@@ -271,6 +271,245 @@ cosmetics:
     model: fluxcosmetics:coiffe_moto
     slot: head
     rarity: unique
+  # AETHERIA, the 48 relics (2026-11-21): 47 head pieces (models of assets/coiffes_aetheria.py, through gen_coiffes.py),
+  # the bow tie is an accessory. trail: particles around the head (trails, ring: true).
+  glasses_sunglasses:
+    name: "&#4D9CCBLunettes de soleil"
+    model: fluxcosmetics:coiffe_glasses_sunglasses
+    slot: head
+    rarity: commun
+  glasses_round:
+    name: "&#8994A6Lunettes rondes"
+    model: fluxcosmetics:coiffe_glasses_round
+    slot: head
+    rarity: commun
+  glasses_regular:
+    name: "&#A6E2F0Lunettes de vue"
+    model: fluxcosmetics:coiffe_glasses_regular
+    slot: head
+    rarity: commun
+  glasses_pixel:
+    name: "&#8994A6Lunettes pixelisées"
+    model: fluxcosmetics:coiffe_glasses_pixel
+    slot: head
+    rarity: unique
+  monocle:
+    name: "&#E5C978Monocle"
+    model: fluxcosmetics:coiffe_monocle
+    slot: head
+    rarity: unique
+  mask_surgical:
+    name: "&#4D9CCBMasque chirurgical"
+    model: fluxcosmetics:coiffe_mask_surgical
+    slot: head
+    rarity: commun
+  mask_ninja:
+    name: "&#8994A6Masque ninja"
+    model: fluxcosmetics:coiffe_mask_ninja
+    slot: head
+    rarity: unique
+  mask_ski:
+    name: "&#83E7E2Masque de ski"
+    model: fluxcosmetics:coiffe_mask_ski
+    slot: head
+    rarity: unique
+  mask_pirate:
+    name: "&#F0E8D8Cache-œil de pirate"
+    model: fluxcosmetics:coiffe_mask_pirate
+    slot: head
+    rarity: commun
+  mask_masquerade:
+    name: "&#B9A2E1Masque de carnaval"
+    model: fluxcosmetics:coiffe_mask_masquerade
+    slot: head
+    rarity: epique
+  clown_nose:
+    name: "&#E87569Faux nez rouge"
+    model: fluxcosmetics:coiffe_clown_nose
+    slot: head
+    rarity: commun
+  cat_ears:
+    name: "&#F1B9CCOreilles de chat"
+    model: fluxcosmetics:coiffe_cat_ears
+    slot: head
+    rarity: commun
+  bunny_ears:
+    name: "&#F1B9CCOreilles de lapin"
+    model: fluxcosmetics:coiffe_bunny_ears
+    slot: head
+    rarity: commun
+  demon_horns:
+    name: "&#B94450Cornes de démon"
+    model: fluxcosmetics:coiffe_demon_horns
+    slot: head
+    rarity: unique
+  angel_halo:
+    name: "&#E5C978Halo d'ange"
+    model: fluxcosmetics:coiffe_angel_halo
+    slot: head
+    rarity: epique
+  mini_head_wings:
+    name: "&#F6FAFFPetites ailes"
+    model: fluxcosmetics:coiffe_mini_head_wings
+    slot: head
+    rarity: epique
+  deer_antlers:
+    name: "&#D2B18ABois de cerf"
+    model: fluxcosmetics:coiffe_deer_antlers
+    slot: head
+    rarity: epique
+  tiara:
+    name: "&#E5C978Diadème"
+    model: fluxcosmetics:coiffe_tiara
+    slot: head
+    rarity: epique
+  hair_ribbon:
+    name: "&#F1B9CCRuban"
+    model: fluxcosmetics:coiffe_hair_ribbon
+    slot: head
+    rarity: commun
+  hair_flower:
+    name: "&#D88EAAFleur dans les cheveux"
+    model: fluxcosmetics:coiffe_hair_flower
+    slot: head
+    rarity: commun
+  feather_hat:
+    name: "&#4D9CCBPlume"
+    model: fluxcosmetics:coiffe_feather_hat
+    slot: head
+    rarity: unique
+  alien_antennae:
+    name: "&#83E7E2Antennes d'alien"
+    model: fluxcosmetics:coiffe_alien_antennae
+    slot: head
+    rarity: unique
+  floating_star:
+    name: "&#FFF0AEÉtoile flottante"
+    model: fluxcosmetics:coiffe_floating_star
+    slot: head
+    rarity: epique
+  flower_crown:
+    name: "&#85B875Couronne de fleurs"
+    model: fluxcosmetics:coiffe_flower_crown
+    slot: head
+    rarity: unique
+  duck_hat:
+    name: "&#E8C84DCanard sur la tête"
+    model: fluxcosmetics:coiffe_duck_hat
+    slot: head
+    rarity: unique
+  bread_hat:
+    name: "&#E8B96EPain sur la tête"
+    model: fluxcosmetics:coiffe_bread_hat
+    slot: head
+    rarity: commun
+  watermelon_hat:
+    name: "&#E87569Tranche de pastèque"
+    model: fluxcosmetics:coiffe_watermelon_hat
+    slot: head
+    rarity: commun
+  mini_water_bucket:
+    name: "&#83CBE4Seau d'eau miniature"
+    model: fluxcosmetics:coiffe_mini_water_bucket
+    slot: head
+    rarity: commun
+  mini_creeper:
+    name: "&#85B875Petit Creeper"
+    model: fluxcosmetics:coiffe_mini_creeper
+    slot: head
+    rarity: epique
+  mini_tnt:
+    name: "&#E87569Mini TNT"
+    model: fluxcosmetics:coiffe_mini_tnt
+    slot: head
+    rarity: epique
+  piston_hat:
+    name: "&#C78A4APiston"
+    model: fluxcosmetics:coiffe_piston_hat
+    slot: head
+    rarity: unique
+  torch_hat:
+    name: "&#F3A34ETorche"
+    model: fluxcosmetics:coiffe_torch_hat
+    slot: head
+    rarity: unique
+  mushroom_hat:
+    name: "&#E87569Champignon"
+    model: fluxcosmetics:coiffe_mushroom_hat
+    slot: head
+    rarity: commun
+  fish_hat:
+    name: "&#83CBE4Poisson"
+    model: fluxcosmetics:coiffe_fish_hat
+    slot: head
+    rarity: unique
+  fried_egg_hat:
+    name: "&#E8C84DŒuf au plat"
+    model: fluxcosmetics:coiffe_fried_egg_hat
+    slot: head
+    rarity: commun
+  toilet_paper_hat:
+    name: "&#F0E8D8Rouleau de papier toilette"
+    model: fluxcosmetics:coiffe_toilet_paper_hat
+    slot: head
+    rarity: commun
+  mini_tv:
+    name: "&#B9A2E1Télévision miniature"
+    model: fluxcosmetics:coiffe_mini_tv
+    slot: head
+    rarity: epique
+  diamond_crown:
+    name: "&#83E7E2Couronne en diamant"
+    model: fluxcosmetics:coiffe_diamond_crown
+    slot: head
+    rarity: legendaire
+  netherite_crown:
+    name: "&#8994A6Couronne en Netherite"
+    model: fluxcosmetics:coiffe_netherite_crown
+    slot: head
+    rarity: legendaire
+  animated_halo:
+    name: "&#B9A2E1Halo mystique"
+    model: fluxcosmetics:coiffe_animated_halo
+    slot: head
+    rarity: mythique
+  laser_glasses:
+    name: "&#E87569Lunettes laser"
+    model: fluxcosmetics:coiffe_laser_glasses
+    slot: head
+    rarity: mythique
+  flaming_horns:
+    name: "&#F3A34ECornes enflammées"
+    model: fluxcosmetics:coiffe_flaming_horns
+    slot: head
+    rarity: mythique
+  ice_crown:
+    name: "&#A6E2F0Couronne de glace"
+    model: fluxcosmetics:coiffe_ice_crown
+    slot: head
+    rarity: legendaire
+  dragon_wings:
+    name: "&#8766BCAiles de dragon"
+    model: fluxcosmetics:coiffe_dragon_wings
+    slot: head
+    rarity: fabuleux
+  wither_mask:
+    name: "&#8994A6Masque de Wither"
+    model: fluxcosmetics:coiffe_wither_mask
+    slot: head
+    rarity: legendaire
+  ender_dragon_crown:
+    name: "&#A66BCBCouronne du Ender Dragon"
+    model: fluxcosmetics:coiffe_ender_dragon_crown
+    slot: head
+    trail: ender_crown_particles
+    rarity: fabuleux
+  cosmic_hat:
+    name: "&#B9A2E1Chapeau cosmique"
+    model: fluxcosmetics:coiffe_cosmic_hat
+    slot: head
+    trail: cosmic_hat_particles
+    rarity: fabuleux
   wings:
     name: "Ailes"
     item: ELYTRA
@@ -426,6 +665,12 @@ cosmetics:
     back: true
     trail: cape_astral_particles
     rarity: legendaire
+  bow_tie:
+    name: "&#B94450Nœud papillon"
+    item: fluxarmor:acc_bow_tie_chestplate
+    slot: chest
+    accessory: true
+    rarity: commun
 
 # Particles around the wearer of a cosmetic (its trail). colours: pairs "first colour, colour it fades into", one pair
 # per particle; period: ticks between two particles (5 = four a second, about ten alive at once); size of the dust;
@@ -440,6 +685,22 @@ trails:
     high: 1.35
     radius: 0.5
     behind: 0.35
+  ender_crown_particles:
+    colours: ["#A66BCB #583C82", "#B9A2E1 #543D80"]
+    period: 6
+    size: 0.45
+    ring: true
+    low: 1.85
+    high: 2.45
+    radius: 0.55
+  cosmic_hat_particles:
+    colours: ["#F6FAFF #B9A2E1", "#B9A2E1 #8766BC", "#FFF0AE #F6FAFF"]
+    period: 4
+    size: 0.4
+    ring: true
+    low: 1.9
+    high: 2.7
+    radius: 0.7
 
 # Outfits of the rpg universe, apart from the vanilla cosmetics: each one is a whole outfit (the four slots).
 # set: a FluxArmor set (pieces fluxarmor:<set>_<helmet|chestplate|leggings|boots>), or pieces.<piece> to pick the
