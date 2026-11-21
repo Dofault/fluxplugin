@@ -7,7 +7,7 @@ usage: "!&#FF5C5C/%flux_cmd_fluxcosmetics_tenue%"
 hint: "&r&7%img_move_keys% &#FFD94DCamera   &r&7%img_mouse_move% &#FFD94DUp/Down   &r&7%img_middle_click% &#FFD94DZoom   &r&7%img_right_click% &#FFD94DCosmetics menu   &r&7%img_left_click% &#FFD94DLeave"
 menu:
   # one entry per category, in this order: helmet, chestplate, leggings, boots, tags
-  categories: ["Helmets", "Chestplates", "Leggings", "Boots", "Tags", "My outfits", "Rpg outfits"]
+  categories: ["Helmets", "Chestplates", "Leggings", "Boots", "Tags", "My outfits", "Rpg outfits", "Accessories"]
   category-descriptions:
     - "What you wear on your head, over your real helmet."
     - "What you wear on your chest, over your real chestplate."
@@ -16,6 +16,7 @@ menu:
     - "The tag shown next to your name in the chat."
     - "Save what you wear (cosmetics and tag) under a name, and put it back on in one click."
     - "Your whole outfit in the rpg world: your class's, or another one you unlocked."
+    - "Bags, capes, wings, ties, weapons on the back... Worn on the chest, in place of a cosmetic chestplate."
   rpg-class-outfit: "Your class's outfit."
   rpg-class: "Class"
   rpg-level: "Required level"

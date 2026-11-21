@@ -2,7 +2,7 @@
 # only (slots 54 to 89 of a 6-row chest): the chest above stays empty and transparent, the mannequin is seen over the
 # menu and wears what is clicked at once. Entries and category buttons are built by FluxCosmetics (lists cosmetics,
 # cosmetics_cat_<n>); Flux keeps each player's category and page, so the menu opens again where he left it.
-# Row 1: back, 6 categories (helmets, chestplates, leggings, boots, tags, rpg outfits; slot 61 left empty), icon.
+# Row 1: back, 7 categories (helmets, chestplates, leggings, boots, tags, rpg outfits, accessories), icon.
 # Saved outfits (« Mes tenues ») right under back (63, owner's choice of 2026-11-21). Rows 2-3: the list (14 per
 # page), turn and see the outfit on the right.
 # Hotbar row: pages. Theme: theme.menus.cosmetiques of Flux's config (picture drawn by gen_ui.py).
@@ -59,6 +59,12 @@ lists:
       material: entry
       actions:
         left: ["[cosmetics] category 6"]
+  cosmetics_cat_7:
+    slots: 61
+    item:
+      material: entry
+      actions:
+        left: ["[cosmetics] category 7"]
   cosmetics:
     slots: 64-70, 73-79
     item:

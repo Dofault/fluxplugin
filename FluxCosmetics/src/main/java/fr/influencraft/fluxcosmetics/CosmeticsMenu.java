@@ -22,8 +22,8 @@ import java.util.List;
  * is clicked at once.
  *
  * <p>One Flux list, {@code cosmetics}, filtered by category: the four armour slots ({@link Outfits}), the tags
- * ({@link PlayerTags}), and the saved outfits
- * ({@link OutfitPresets}). Flux keeps the category and the
+ * ({@link PlayerTags}), the saved outfits ({@link OutfitPresets}), the rpg outfits and the accessories (chest
+ * cosmetics of their own list). Flux keeps the category and the
  * page of each player, so the menu opens again where he left it.</p>
  *
  * <pre>
@@ -49,8 +49,9 @@ final class CosmeticsMenu {
     /** The categories in filter order: the four armour slots, the tags, the saved outfits. */
     private static final EquipmentSlot[] SLOTS = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
     private static final String[] ICONS = {"LEATHER_HELMET", "LEATHER_CHESTPLATE", "LEATHER_LEGGINGS", "LEATHER_BOOTS", "NAME_TAG",
-            "ARMOR_STAND", "NETHERITE_CHESTPLATE"};
-    static final int TAGS = 4, PRESETS = 5, RPG = 6;
+            "ARMOR_STAND", "NETHERITE_CHESTPLATE", "BUNDLE"};
+    /** ACCESSORIES: the chest cosmetics marked {@code accessory} (bags, wings, ties...), apart from the chestplates. */
+    static final int TAGS = 4, PRESETS = 5, RPG = 6, ACCESSORIES = 7;
 
     private final FluxCosmetics plugin;
     private final OutfitPresets presets;
@@ -116,7 +117,7 @@ final class CosmeticsMenu {
      * he is in.
      */
     boolean allowed(Player player, int category) {
-        return category >= 0 && category <= RPG;
+        return category >= 0 && category < ICONS.length;
     }
 
     private List<String> categories() {
@@ -169,7 +170,12 @@ final class CosmeticsMenu {
             case "wear" -> {
                 plugin.outfits().toggle(player, arg, true);
                 Lists.invalidate(player, LIST);
-                if (view != null) view.redress();
+                if (view != null) {
+                    view.redress();
+                    // an accessory just put on: the camera goes to the side it is worn on
+                    Outfits.Cosmetic c = plugin.outfits().get(arg);
+                    if (c != null && c.accessory() && arg.equals(plugin.outfits().worn(player, c.slot()))) view.face(c.back());
+                }
             }
             case "none" -> {
                 try {
@@ -297,13 +303,16 @@ final class CosmeticsMenu {
     }
 
     private List<ListEntry> pieces(Player viewer, int category) {
-        EquipmentSlot slot = SLOTS[Math.clamp(category, 0, SLOTS.length - 1)];
+        // accessories share the chest slot with the chestplates: one of the two is worn at a time
+        boolean accessories = category == ACCESSORIES;
+        EquipmentSlot slot = accessories ? EquipmentSlot.CHEST : SLOTS[Math.clamp(category, 0, SLOTS.length - 1)];
         Outfits outfits = plugin.outfits();
         String worn = outfits.worn(viewer, slot);
+        Outfits.Cosmetic wornCosmetic = worn == null ? null : outfits.get(worn);
         List<ListEntry> out = new ArrayList<>();
-        out.add(nothing(viewer, slot, worn == null));
+        out.add(nothing(viewer, slot, wornCosmetic == null || wornCosmetic.accessory() != accessories));
         for (Outfits.Cosmetic c : outfits.all()) {
-            if (c.slot() != slot) continue;
+            if (c.slot() != slot || c.accessory() != accessories) continue;
             boolean wearing = c.key().equals(worn);
             boolean owned = outfits.owns(viewer, c);
             // pieces of rpg outfits: shown to admins only

@@ -57,10 +57,13 @@ final class Outfits implements Listener {
 
     /**
      * {@code item}: what is worn, a Flux item id ({@code namespace:id}) or a material. {@code model}: an item model
-     * of the pack drawn in place of that item's own (a hat that is no armour piece), or null.
+     * of the pack drawn in place of that item's own (a hat that is no armour piece), or null. {@code accessory}: a
+     * chest cosmetic listed in the accessories of the menu (a bag, wings, a tie: it still takes the chest slot);
+     * {@code back}: it is worn on the back (the menu's camera goes behind the mannequin); {@code trail}: id of the
+     * particles around its wearer ({@link Trails}), or null.
      */
     record Cosmetic(String key, String name, String item, String model, EquipmentSlot slot, boolean free, Rarity rarity,
-                    boolean adminOnly) {
+                    boolean adminOnly, boolean accessory, boolean back, String trail) {
     }
 
     /**
@@ -168,7 +171,8 @@ final class Outfits implements Listener {
                 plugin.getLogger().warning("Cosmetic " + key + ": unknown rarity " + c.getString("rarity") + ", " + lowest.id() + " used");
                 rarity = lowest;
             }
-            cosmetics.put(key, new Cosmetic(key, c.getString("name", key), item, modelKey == null ? null : modelKey.toString(), slot, c.getBoolean("free", false), rarity, false));
+            cosmetics.put(key, new Cosmetic(key, c.getString("name", key), item, modelKey == null ? null : modelKey.toString(), slot, c.getBoolean("free", false), rarity, false,
+                    slot == EquipmentSlot.CHEST && c.getBoolean("accessory", false), c.getBoolean("back", false), c.getString("trail")));
         }
         rpg.load(config);
         // each piece of an rpg outfit, worn on its own outside the rpg universe by admins only
@@ -176,7 +180,7 @@ final class Outfits implements Listener {
             for (EquipmentSlot slot : ARMOUR) {
                 String item = o.pieces().get(slot);
                 String key = pieceKey(o, slot);
-                if (item != null && !cosmetics.containsKey(key)) cosmetics.put(key, new Cosmetic(key, o.name(), item, null, slot, false, o.rarity(), true));
+                if (item != null && !cosmetics.containsKey(key)) cosmetics.put(key, new Cosmetic(key, o.name(), item, null, slot, false, o.rarity(), true, false, false, null));
             }
         }
         // the looks of the players online follow the new definitions

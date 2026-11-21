@@ -7,7 +7,7 @@ usage: "!&#FF5C5C/%flux_cmd_fluxcosmetics_tenue%"
 hint: "&r&7%img_move_keys% &#FFD94DCaméra   &r&7%img_mouse_move% &#FFD94DMonter/Descendre   &r&7%img_middle_click% &#FFD94DZoom   &r&7%img_right_click% &#FFD94DMenu cosmétique   &r&7%img_left_click% &#FFD94DQuitter"
 menu:
   # une entrée par catégorie, dans l'ordre : casque, plastron, jambières, bottes, tags
-  categories: ["Casques", "Plastrons", "Jambières", "Bottes", "Tags", "Mes tenues", "Tenues RPG"]
+  categories: ["Casques", "Plastrons", "Jambières", "Bottes", "Tags", "Mes tenues", "Tenues RPG", "Accessoires"]
   category-descriptions:
     - "Ce que tu portes sur la tête, par-dessus ton vrai casque."
     - "Ce que tu portes sur le torse, par-dessus ton vrai plastron."
@@ -16,6 +16,7 @@ menu:
     - "Le tag affiché à côté de ton pseudo dans le tchat."
     - "Enregistre ce que tu portes (cosmétiques et tag) sous un nom, et remets-le en un clic."
     - "Ta tenue complète dans le monde RPG : celle de ta classe, ou une autre que tu as débloquée."
+    - "Sacs, capes, ailes, cravates, armes dans le dos... Portés sur le torse, à la place d'un plastron cosmétique."
   rpg-class-outfit: "La tenue de ta classe."
   rpg-class: "Classe"
   rpg-level: "Niveau requis"

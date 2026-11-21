@@ -412,6 +412,12 @@ final class WardrobeView {
         forced = true;
     }
 
+    /** The menu's camera glides behind the mannequin (three quarters, an accessory worn on the back) or in front of him. */
+    void face(boolean behind) {
+        goalYaw = wrap(back.getYaw() + (behind ? 25 : 180));
+        forced = true;
+    }
+
     /** What he wears changed: the mannequin wears it too. */
     void redress() {
         if (mannequin == null || !mannequin.isValid()) return;

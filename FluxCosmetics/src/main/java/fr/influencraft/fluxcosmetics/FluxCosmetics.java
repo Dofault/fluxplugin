@@ -31,6 +31,7 @@ public final class FluxCosmetics extends FluxPlugin {
     private Wardrobe wardrobe;
     private Outfits outfits;
     private CosmeticsMenu menu;
+    private Trails trails;
     private PlayerTags tags;
 
     @Override
@@ -47,6 +48,9 @@ public final class FluxCosmetics extends FluxPlugin {
         fr.influencraft.flux.api.cosmetics.ClassOutfits.provide(outfits.rpg()::classItems);
         // started while players are online (restart of the plugin): their cosmetics back on
         for (Player p : Bukkit.getOnlinePlayers()) outfits.open(p);
+        trails = new Trails(this);
+        trails.load(getConfig());
+        trails.start();
         menu = new CosmeticsMenu(this);
         menu.register();
         tags = new PlayerTags(this);
@@ -79,6 +83,7 @@ public final class FluxCosmetics extends FluxPlugin {
     protected void disable() {
         fr.influencraft.flux.api.cosmetics.ClassOutfits.provide(null);
         if (tags != null) tags.stop();
+        if (trails != null) trails.stop();
         if (wardrobe != null) wardrobe.closeAll();
         if (outfits != null) {
             outfits.closeAll();
@@ -91,6 +96,7 @@ public final class FluxCosmetics extends FluxPlugin {
         super.reload();
         settings = Settings.read(getConfig());
         if (outfits != null) outfits.load(getConfig());
+        if (trails != null) trails.load(getConfig());
         if (tags != null) tags.settings();
     }
 

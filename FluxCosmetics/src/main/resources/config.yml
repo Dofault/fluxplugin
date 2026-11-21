@@ -57,6 +57,8 @@ menu-camera:
     outfits: {height: 1.1, distance: 3.6, pitch: 8, look-down: 14}
     # rpg outfits: the whole body
     rpg: {height: 1.0, distance: 3.2, pitch: 8, look-down: 14}
+    # accessories (bags, capes, wings...): the chest and what stands out of it
+    accessories: {height: 1.3, distance: 2.6, pitch: 8, look-down: 18}
 
 
 # Rarities, from the most common to the rarest (menu order); colour of the name shown in the menu. Names in the
@@ -274,6 +276,170 @@ cosmetics:
     item: ELYTRA
     slot: chest
     rarity: unique
+  # accessories, the collection "Relics of Azureth" (models of FluxCosmetics/assets/gen_accessoires.py, drawn in 3D on the
+  # torso by FluxArmor: sets acc_<id>). accessory: listed in the accessories of the menu, still worn in the chest slot
+  # (one chest cosmetic at a time); back: worn on the back (the menu's camera goes behind); trail: particles (trails).
+  backpack_classic:
+    name: "&#BD9064Sac de l'Aventurier"
+    item: fluxarmor:acc_backpack_classic_chestplate
+    slot: chest
+    accessory: true
+    back: true
+    rarity: commun
+  backpack_hiking:
+    name: "&#588DB0Sac d'Expédition"
+    item: fluxarmor:acc_backpack_hiking_chestplate
+    slot: chest
+    accessory: true
+    back: true
+    rarity: unique
+  cape_royal:
+    name: "&#B65C68Cape du Voyageur Royal"
+    item: fluxarmor:acc_cape_royal_chestplate
+    slot: chest
+    accessory: true
+    back: true
+    rarity: epique
+  scarf_azure:
+    name: "&#A5CCDAÉcharpe du Mage Errant"
+    item: fluxarmor:acc_scarf_azure_chestplate
+    slot: chest
+    accessory: true
+    rarity: commun
+  necktie_ruby:
+    name: "&#B65C68Cravate Rubis"
+    item: fluxarmor:acc_necktie_ruby_chestplate
+    slot: chest
+    accessory: true
+    rarity: commun
+  bowtie_velvet:
+    name: "&#588DB0Nœud Papillon de Velours"
+    item: fluxarmor:acc_bowtie_velvet_chestplate
+    slot: chest
+    accessory: true
+    rarity: commun
+  shoulder_strap:
+    name: "&#BD9064Bandoulière de l'Explorateur"
+    item: fluxarmor:acc_shoulder_strap_chestplate
+    slot: chest
+    accessory: true
+    rarity: commun
+  suspenders_leather:
+    name: "&#BD9064Bretelles du Voyageur"
+    item: fluxarmor:acc_suspenders_leather_chestplate
+    slot: chest
+    accessory: true
+    rarity: commun
+  vest_open:
+    name: "&#588DB0Gilet de l'Aventurier"
+    item: fluxarmor:acc_vest_open_chestplate
+    slot: chest
+    accessory: true
+    rarity: unique
+  armor_ornamental:
+    name: "&#B6C0C9Plastron d'Apparat"
+    item: fluxarmor:acc_armor_ornamental_chestplate
+    slot: chest
+    accessory: true
+    rarity: epique
+  wings_angel:
+    name: "&#F5F0E5Ailes Célestes"
+    item: fluxarmor:acc_wings_angel_chestplate
+    slot: chest
+    accessory: true
+    back: true
+    rarity: legendaire
+  wings_demon:
+    name: "&#A83F48Ailes Démoniaques"
+    item: fluxarmor:acc_wings_demon_chestplate
+    slot: chest
+    accessory: true
+    back: true
+    rarity: legendaire
+  wings_butterfly:
+    name: "&#A18AC4Ailes de Papillon Féerique"
+    item: fluxarmor:acc_wings_butterfly_chestplate
+    slot: chest
+    accessory: true
+    back: true
+    rarity: mythique
+  quiver_hunter:
+    name: "&#BD9064Carquois du Chasseur"
+    item: fluxarmor:acc_quiver_hunter_chestplate
+    slot: chest
+    accessory: true
+    back: true
+    rarity: unique
+  katana_back:
+    name: "&#B65C68Katana du Rônin"
+    item: fluxarmor:acc_katana_back_chestplate
+    slot: chest
+    accessory: true
+    back: true
+    rarity: epique
+  sword_back:
+    name: "&#B6C0C9Épée du Chevalier"
+    item: fluxarmor:acc_sword_back_chestplate
+    slot: chest
+    accessory: true
+    back: true
+    rarity: epique
+  shield_back:
+    name: "&#588DB0Bouclier au Lion"
+    item: fluxarmor:acc_shield_back_chestplate
+    slot: chest
+    accessory: true
+    back: true
+    rarity: epique
+  jetpack_arcane:
+    name: "&#62C8D0Jetpack Arcanique"
+    item: fluxarmor:acc_jetpack_arcane_chestplate
+    slot: chest
+    accessory: true
+    back: true
+    rarity: mythique
+  shoulder_fox:
+    name: "&#C78C69Renardeau d'Épaule"
+    item: fluxarmor:acc_shoulder_fox_chestplate
+    slot: chest
+    accessory: true
+    rarity: mythique
+  back_plush_dragon:
+    name: "&#588DB0Peluche Dragonnet"
+    item: fluxarmor:acc_back_plush_dragon_chestplate
+    slot: chest
+    accessory: true
+    back: true
+    rarity: epique
+  delivery_bag:
+    name: "&#B65C68Sac du Coursier"
+    item: fluxarmor:acc_delivery_bag_chestplate
+    slot: chest
+    accessory: true
+    back: true
+    rarity: unique
+  cape_astral:
+    name: "&#A18AC4Cape Astrale"
+    item: fluxarmor:acc_cape_astral_chestplate
+    slot: chest
+    accessory: true
+    back: true
+    trail: cape_astral_particles
+    rarity: legendaire
+
+# Particles around the wearer of a cosmetic (its trail). colours: pairs "first colour, colour it fades into", one pair
+# per particle; period: ticks between two particles (5 = four a second, about ten alive at once); size of the dust;
+# low / high: heights above his feet, radius: to each side of his back, behind: distance behind him (blocks).
+# Seen by those who see him only; none while he is invisible, in the wardrobe or in the rpg universe.
+trails:
+  cape_astral_particles:
+    colours: ["#62C8D0 #A5CCDA", "#D6B9DF #A18AC4", "#A5CCDA #D6B9DF"]
+    period: 5
+    size: 0.5
+    low: 0.45
+    high: 1.35
+    radius: 0.5
+    behind: 0.35
 
 # Outfits of the rpg universe, apart from the vanilla cosmetics: each one is a whole outfit (the four slots).
 # set: a FluxArmor set (pieces fluxarmor:<set>_<helmet|chestplate|leggings|boots>), or pieces.<piece> to pick the
