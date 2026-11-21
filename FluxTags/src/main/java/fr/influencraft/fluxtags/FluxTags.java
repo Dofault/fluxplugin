@@ -44,8 +44,11 @@ import java.util.concurrent.ConcurrentHashMap;
  *   <li>{@code rang} (shown until the player picks another tag or none): follows his current rank (an older rank's
  *   tag cannot be kept);</li>
  *   <li>{@code metier_<job>}: unlocked at the first job tier (level 50), then a new look at every tier up to 300;</li>
- *   <li>specials ({@code specials} of the config): unlocked by {@code fluxtags.tag.<id>}.</li>
+ *   <li>specials ({@code specials} of the config): unlocked by {@code fluxtags.tag.<id>}; {@code hidden} ones
+ *   (staff tags) are only listed for who has them, {@code shortcut} gives one a command of its own.</li>
  * </ul>
+ * A player who never picked wears the first tag of {@code default-tags} he has unlocked (a staff member his staff
+ * tag), else his rank. {@code /tags <tag>} wears a tag without the menu.
  * Images: pack {@code fluxtags} of ItemsAdder ({@code assets/gen_tags.py}), glyph {@code <image>} for the chat and
  * {@code <image>_r<row>} for row 1 to 5 of the menu, {@code rang_<rank>_p} for the profile. Placeholders:
  * {@code %fluxtags_tag%}, {@code %fluxtags_tag_spaced%}, {@code %fluxtags_name%}, {@code %fluxtags_unlocked%},
@@ -57,6 +60,8 @@ public final class FluxTags extends FluxPlugin implements Listener {
     private static final String NONE = "aucun";
     /** The rank tag: shown until the player picks another one (or none). */
     private static final String RANK = "rang";
+    /** Nothing picked yet (no row): the default tag is worked out from what the player has. */
+    private static final String UNSET = "";
     private static final int ROWS = 6;
     /** First character of the menu sheet fonts (gen_tags.MENU_BASE). */
     private static final int MENU_BASE = 0xE000;
@@ -79,6 +84,7 @@ public final class FluxTags extends FluxPlugin implements Listener {
     private String table;
     private List<Integer> tiers = List.of(50, 100, 150, 200, 250, 300);
     private String rankPlaceholder;
+    private List<String> defaults = List.of();
     private boolean jobsLoaded;
 
     @Override
@@ -120,10 +126,20 @@ public final class FluxTags extends FluxPlugin implements Listener {
                 .permission("fluxtags.use")
                 .executor((sender, label, args) -> {
                     Player p = Players.of(sender);
-                    if (p != null) FluxApi.open(p, "tags");
+                    if (p == null) return true;
+                    if (args.length > 0) wear(p, args[0].toLowerCase(Locale.ROOT));
+                    else FluxApi.open(p, "tags");
                     return true;
                 })
+                .completer((sender, args) -> {
+                    Player p = Players.of(sender);
+                    if (p == null || args.length != 1) return List.of();
+                    String typed = args[0].toLowerCase(Locale.ROOT);
+                    return all().values().stream().filter(t -> t.id().equals(NONE) || image(p, t) != null)
+                            .map(Tag::id).filter(id -> id.startsWith(typed)).toList();
+                })
                 .register();
+        shortcuts();
         command("fluxtags")
                 .description("Tags administration.")
                 .permission(fr.influencraft.flux.api.staff.Staff.ADMIN)
@@ -161,8 +177,30 @@ public final class FluxTags extends FluxPlugin implements Listener {
         settings();
     }
 
+    /** One command per special tag with a {@code shortcut}: wears that tag ({@code /_o} for the operator tag). */
+    private void shortcuts() {
+        ConfigurationSection specials = getConfig().getConfigurationSection("specials");
+        if (specials == null) return;
+        for (String id : specials.getKeys(false)) {
+            String label = specials.getString(id + ".shortcut", "").trim();
+            if (label.isEmpty()) continue;
+            command("tag_" + id)
+                    .description("Wear the tag " + specials.getString(id + ".name", id) + ".")
+                    .permission("fluxtags.tag." + id)
+                    .aliases(label)
+                    .suggest(false)
+                    .executor((sender, typed, args) -> {
+                        Player p = Players.of(sender);
+                        if (p != null) wear(p, id);
+                        return true;
+                    })
+                    .register();
+        }
+    }
+
     private void settings() {
         rankPlaceholder = getConfig().getString("rank-placeholder", "%luckperms_current_group_on_track_standard%");
+        defaults = getConfig().getStringList("default-tags");
         tiers = getConfig().getIntegerList("job-tiers");
         if (tiers.isEmpty()) tiers = List.of(50, 100, 150, 200, 250, 300);
         catalogue.clear();
@@ -219,17 +257,26 @@ public final class FluxTags extends FluxPlugin implements Listener {
     }
 
     private String selection(UUID id) {
-        return selected.computeIfAbsent(id, this::read);
+        String picked = selected.computeIfAbsent(id, this::read);
+        if (!picked.equals(UNSET)) return picked;
+        Player p = Bukkit.getPlayer(id);
+        if (p != null) {
+            for (String tag : defaults) {
+                Tag t = catalogue.get(tag);
+                if (t != null && image(p, t) != null) return tag;
+            }
+        }
+        return RANK;
     }
 
     private String read(UUID id) {
         try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement("SELECT tag FROM " + table + " WHERE uuid = ?")) {
             ps.setString(1, id.toString());
             try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? rs.getString(1) : RANK;
+                return rs.next() ? rs.getString(1) : UNSET;
             }
         } catch (SQLException e) {
-            return RANK;
+            return UNSET;
         }
     }
 
@@ -282,6 +329,7 @@ public final class FluxTags extends FluxPlugin implements Listener {
         for (Tag t : all().values()) {
             String image = image(p, t);
             boolean unlocked = t.id().equals(NONE) || image != null;
+            if (!unlocked && hidden(t)) continue;
             boolean shown = t.id().equals(current) && unlocked;
             Lore lore = Lore.create();
             if (t.id().equals(NONE)) lore.description(messages().raw("none-description"));
@@ -329,6 +377,25 @@ public final class FluxTags extends FluxPlugin implements Listener {
     private static String lockedImage(Tag t) {
         if (t.job() != null) return "metier_" + t.job() + "_1";
         return t.special() != null ? t.special() : t.provided() != null ? t.id() : null;
+    }
+
+    /** A special tag only listed for the players who have it (staff tags). */
+    private boolean hidden(Tag t) {
+        return t.special() != null && getConfig().getBoolean("specials." + t.special() + ".hidden");
+    }
+
+    /** Wears a tag by its id (command): unlike a click in the menu, wearing the current tag again keeps it. */
+    private void wear(Player p, String id) {
+        jobsReady();
+        Tag t = all().get(id);
+        if (t == null || (!id.equals(NONE) && image(p, t) == null)) {
+            messages().send(p, t == null || hidden(t) ? "unknown-tag" : "locked");
+            return;
+        }
+        write(p.getUniqueId(), id);
+        if (id.equals(NONE)) messages().send(p, "cleared");
+        else messages().send(p, "picked", "%tag%", name(p, t));
+        fr.influencraft.flux.api.tab.TabList.refresh(p);
     }
 
     private void pick(Player p, String id, boolean quiet) {
@@ -393,7 +460,8 @@ public final class FluxTags extends FluxPlugin implements Listener {
         jobsReady();
         switch (key) {
             case "total" -> {
-                return String.valueOf(all().size() - 1);
+                return String.valueOf(all().values().stream()
+                        .filter(t -> !t.id().equals(NONE) && (!hidden(t) || (p != null && image(p, t) != null))).count());
             }
             case "rows" -> {
                 return p == null ? "" : rows(p);

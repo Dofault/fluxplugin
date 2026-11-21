@@ -543,6 +543,36 @@ font_images:
     path: "tags/divorce.png"
     scale_ratio: 11
     y_position: 9
+  guide:
+    show_in_gui: false
+    suggest_in_command: false
+    path: "tags/guide.png"
+    scale_ratio: 11
+    y_position: 9
+  moderateur:
+    show_in_gui: false
+    suggest_in_command: false
+    path: "tags/moderateur.png"
+    scale_ratio: 11
+    y_position: 9
+  supermoderateur:
+    show_in_gui: false
+    suggest_in_command: false
+    path: "tags/supermoderateur.png"
+    scale_ratio: 11
+    y_position: 9
+  operateur:
+    show_in_gui: false
+    suggest_in_command: false
+    path: "tags/operateur.png"
+    scale_ratio: 11
+    y_position: 9
+  admin:
+    show_in_gui: false
+    suggest_in_command: false
+    path: "tags/admin.png"
+    scale_ratio: 11
+    y_position: 9
   # former influtags glyphs, same ids (%img_<id>%)
   inconnu:
     show_in_gui: false
@@ -614,36 +644,6 @@ font_images:
     show_in_gui: false
     suggest_in_command: false
     path: "tags/rang_supreme.png"
-    scale_ratio: 11
-    y_position: 9
-  guide:
-    show_in_gui: false
-    suggest_in_command: false
-    path: "tags/guide.png"
-    scale_ratio: 11
-    y_position: 9
-  moderateur:
-    show_in_gui: false
-    suggest_in_command: false
-    path: "tags/moderateur.png"
-    scale_ratio: 11
-    y_position: 9
-  supermoderateur:
-    show_in_gui: false
-    suggest_in_command: false
-    path: "tags/supermoderateur.png"
-    scale_ratio: 11
-    y_position: 9
-  operateur:
-    show_in_gui: false
-    suggest_in_command: false
-    path: "tags/operateur.png"
-    scale_ratio: 11
-    y_position: 9
-  admin:
-    show_in_gui: false
-    suggest_in_command: false
-    path: "tags/admin.png"
     scale_ratio: 11
     y_position: 9
   dev:
