@@ -1,12 +1,36 @@
-fais un prompt qui fera:
-une casquette, lunette de flexeur de soleil, bob, chapeau de cowboy, bandeau de sport.
+fais un prompt qui fera:\
 
+👕 Torse
+- Sac à dos classique
+- Sac à dos de randonnée
+- Cape
+- Écharpe
+- Cravate
+- Nœud papillon
+- Bandoulière
+- Bretelles
+- Gilet ouvert
+- Armure décorative
+- Ailes d'ange
+- Ailes de démon
+- Ailes de papillon
+- Carquois de flèches
+- Katana dans le dos
+- Épée dans le dos
+- Bouclier dorsal
+- Jetpack
+- Petit animal sur l'épaule
+- Peluche sur le dos
+- Sac de livraison
+- Cape avec particules
 
 la suite du prompt est à prendre avec des pincettes : si je t'ai demandé au dessus de faire une casquette il faut que c e soit une casquette même si apres on te dit qu'il faut des bottes par exemple c un bon modele d'exemple pour toi realiser le prompt et comprendre le fond de ce que le prompt attend.
 
 Est-ce que tu peux faire un prompt qui va exécuter la création 3D de 1 à 4 pièces d'armure minecraft selon le contexte ou bien de quelquonque modele selon la nature de ce que j'ai dis au dessus?  te force pas à créer plein de modèle ça depend surtout du paragraphe du haut
 
 dans le cas où tu devrais faire une armure, c'est pas forcément réellement une armure. Ça peut être par exemple une casquette. C'est un exemple. Ça veut pas dire, tu ne vas pas de casquette, mais c'est un exemple. Une casquette n'est pas une armure, tu vois. Et pourtant ça se met sur la tête. Tu vois, dans le sens où tout ça pour dire que tu as droit à toute forme de créativité possible tant que ça reste dans le thème en quelque sorte. Mais version RPG, version MMORPG fantasy . Donc c'est à toi de voir. Tu peux éventuellement t'inspirer des pièces jointes que je vais te mettre pour faire la description dans l'idée. Faudrait un peu la même chose, donc il faudra t'adapter. Mais voilà, les couleurs seront différentes. Tout sera différent, ça sera ta propre patte. Mais juste je trouve les armures très stylées et j'aimerais idéalement que mon modèle fasse la même chose après 
+
+Dans le prompt tu lui diras d'impérativement réaliser directement le modèle 3D dans l'environnement minecraft et de l'integrer dans notre plugin de cosmétique (il sait quoi). le prmpt ne doit surtout pas lui faire faire un cahier des charges ou quoi.
 
 
 Est-ce que tu peux créer un modèle 3D qui sera utilisé dans le contexte d'un serveur Minecraft ? Ce prompt il sera utilisé pour être envoyé au modèle Fable ou Opus 5.5 Ce modèle a diverses inconvénients, notamment le manque de créativité totale. Le fait que ces modèles, lorsqu'on demande de lui faire, ils sont généralement très génériques, manque d'identité. Les couleurs qu'il propose sont généralement contrastées. Il ne sait pas peindre, il sait pas faire grand-chose en autonomie sans que ce soit moche ou bien déjà vu autre part, de manière générale. Ce qui fait que j'aimerais que tu fasses un prompt qui va le guider totalement de A à Z, qui va faire toute la description du modèle 3D le nombre de cubes pour former 

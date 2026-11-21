@@ -97,6 +97,27 @@ cosmetics:
     item: fluxarmor:grandnord_boots
     slot: feet
     rarity: epique
+  # veilleur (Ordre des Veilleurs)
+  veilleur_helmet:
+    name: "&#65AFAECapuche de la Longue Veille"
+    item: fluxarmor:veilleur_helmet
+    slot: head
+    rarity: epique
+  veilleur_chestplate:
+    name: "&#65AFAETunique du Veilleur"
+    item: fluxarmor:veilleur_chestplate
+    slot: chest
+    rarity: epique
+  veilleur_leggings:
+    name: "&#65AFAEGrèves des Frontières"
+    item: fluxarmor:veilleur_leggings
+    slot: legs
+    rarity: epique
+  veilleur_boots:
+    name: "&#65AFAEBottes du Dernier Poste"
+    item: fluxarmor:veilleur_boots
+    slot: feet
+    rarity: epique
   # virale
   virale_helmet:
     name: "&#5a85eaCasque virale"
@@ -301,6 +322,10 @@ rpg-outfits:
     name: "&#83A6F5Tenue de la Sentinelle Azurée"
     set: sentinelle
     rarity: mythique
+  rpg_veilleur:
+    name: "&#65AFAETenue de l'Ordre des Veilleurs"
+    set: veilleur
+    rarity: epique
   rpg_zero:
     name: "&#B9E8F2Tenue du Zéro Absolu"
     set: zero
